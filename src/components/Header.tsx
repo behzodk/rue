@@ -54,10 +54,10 @@ export function Header() {
             <span className="text-xs text-muted-foreground">pts</span>
           </div>
           
-          <button className="relative p-2 rounded-full bg-secondary border border-border hover:bg-accent transition-colors">
+          <Link to="/profile" className="relative p-2 rounded-full bg-secondary border border-border hover:bg-accent transition-colors">
             <User className="h-5 w-5" />
             <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-easy border-2 border-background" />
-          </button>
+          </Link>
         </div>
       </div>
     </header>

@@ -217,9 +217,9 @@ export default function ProblemPage() {
       </div>
 
       {/* Main Content - Split View */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
         {/* Left Panel - Problem Description */}
-        <div className="lg:w-1/2 flex flex-col border-b lg:border-b-0 lg:border-r border-border min-h-[50vh] lg:min-h-0">
+        <div className="lg:w-1/2 flex flex-col border-b lg:border-b-0 lg:border-r border-border min-h-[50vh] lg:min-h-0 lg:h-full">
           {/* Tabs */}
           <div className="shrink-0 border-b border-border bg-card">
             <div className="flex">
@@ -245,8 +245,8 @@ export default function ProblemPage() {
             </div>
           </div>
 
-          {/* Tab Content */}
-          <div className="flex-1 overflow-auto scrollbar-thin">
+          {/* Tab Content - Independent Scroll */}
+          <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
             {activeTab === "description" && (
               <div className="p-6 space-y-6">
                 {/* Problem Statement */}
