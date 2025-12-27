@@ -217,7 +217,12 @@ export default function Profile() {
                   </div>
 
                   <div className="flex gap-3 mt-6">
-                    <a href={`https://github.com/${profileData.github}`} className="p-2 rounded-lg hover:bg-accent transition-colors">
+                    <a
+                      href={`https://github.com/${profileData.github}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2 rounded-lg hover:bg-accent transition-colors"
+                    >
                       <Github className="h-5 w-5" />
                     </a>
                     <a
@@ -228,7 +233,12 @@ export default function Profile() {
                     >
                       <Linkedin className="h-5 w-5" />
                     </a>
-                    <a href={`https://twitter.com/${profileData.twitter}`} className="p-2 rounded-lg hover:bg-accent transition-colors">
+                    <a
+                      href={`https://twitter.com/${profileData.twitter}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2 rounded-lg hover:bg-accent transition-colors"
+                    >
                       <Twitter className="h-5 w-5" />
                     </a>
                   </div>
