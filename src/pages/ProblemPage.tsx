@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { CodeEditor } from "@/components/CodeEditor";
-import { LanguageSelector, languages } from "@/components/LanguageSelector";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { TestCasePanel, type TestCase } from "@/components/TestCasePanel";
 import { DifficultyBadge, type Difficulty } from "@/components/DifficultyBadge";
+import { SubmissionCard, type Submission } from "@/components/SubmissionCard";
+import { LearnWithAI } from "@/components/LearnWithAI";
 import { cn } from "@/lib/utils";
 import { 
   ArrowLeft, 
@@ -17,7 +19,9 @@ import {
   Clock,
   CheckCircle2,
   Lightbulb,
-  Terminal
+  Terminal,
+  Bot,
+  Trophy
 } from "lucide-react";
 
 // Sample problem data
@@ -63,6 +67,14 @@ You can return the answer in any order.`,
   submissions: "12.4M",
   likes: 45892,
 };
+
+const sampleSubmissions: Submission[] = [
+  { id: "1", status: "accepted", language: "JavaScript", runtime: "52 ms", memory: "42.1 MB", timestamp: "2 hours ago", percentile: 95.47 },
+  { id: "2", status: "wrong_answer", language: "JavaScript", runtime: "-", memory: "-", timestamp: "3 hours ago" },
+  { id: "3", status: "accepted", language: "Python", runtime: "45 ms", memory: "16.2 MB", timestamp: "1 day ago", percentile: 87.32 },
+  { id: "4", status: "time_limit", language: "JavaScript", runtime: "-", memory: "-", timestamp: "1 day ago" },
+  { id: "5", status: "accepted", language: "TypeScript", runtime: "48 ms", memory: "44.8 MB", timestamp: "2 days ago", percentile: 91.15 },
+];
 
 const starterCode: Record<string, string> = {
   javascript: `/**
@@ -111,7 +123,7 @@ export default function ProblemPage() {
   const { id } = useParams();
   const [language, setLanguage] = useState("javascript");
   const [code, setCode] = useState(starterCode.javascript);
-  const [activeTab, setActiveTab] = useState<"description" | "solutions" | "submissions">("description");
+  const [activeTab, setActiveTab] = useState<"description" | "submissions" | "ai">("description");
   const [showHints, setShowHints] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [testCases, setTestCases] = useState<TestCase[]>([
@@ -136,7 +148,6 @@ export default function ProblemPage() {
     setIsRunning(true);
     setConsoleOutput(["Running tests..."]);
     
-    // Simulate test execution
     for (let i = 0; i < testCases.length; i++) {
       await new Promise(resolve => setTimeout(resolve, 500));
       setTestCases(prev => prev.map((tc, idx) => 
@@ -144,7 +155,6 @@ export default function ProblemPage() {
       ));
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Simulate random pass/fail
       const passed = Math.random() > 0.3;
       setTestCases(prev => prev.map((tc, idx) => 
         idx === i ? { 
@@ -172,7 +182,7 @@ export default function ProblemPage() {
       <Header />
 
       {/* Problem Header */}
-      <div className="border-b border-border bg-card">
+      <div className="border-b border-border bg-card shrink-0">
         <div className="container py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link 
@@ -196,20 +206,27 @@ export default function ProblemPage() {
               </div>
             </div>
           </div>
+          <Link
+            to={`/problem/${id}/leaderboard`}
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary border border-border hover:bg-accent transition-colors"
+          >
+            <Trophy className="h-4 w-4 text-yellow-500" />
+            Leaderboard
+          </Link>
         </div>
       </div>
 
       {/* Main Content - Split View */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Left Panel - Problem Description */}
-        <div className="w-1/2 border-r border-border overflow-auto">
+        <div className="lg:w-1/2 flex flex-col border-b lg:border-b-0 lg:border-r border-border min-h-[50vh] lg:min-h-0">
           {/* Tabs */}
-          <div className="sticky top-0 z-10 border-b border-border bg-card">
+          <div className="shrink-0 border-b border-border bg-card">
             <div className="flex">
               {[
                 { id: "description", label: "Description", icon: BookOpen },
-                { id: "solutions", label: "Solutions", icon: Lightbulb },
                 { id: "submissions", label: "Submissions", icon: Clock },
+                { id: "ai", label: "Learn with AI", icon: Bot },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -222,91 +239,115 @@ export default function ProblemPage() {
                   )}
                 >
                   <tab.icon className="h-4 w-4" />
-                  {tab.label}
+                  <span className="hidden sm:inline">{tab.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Description Content */}
-          <div className="p-6 space-y-6">
-            {/* Problem Statement */}
-            <div className="prose prose-invert max-w-none">
-              <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                {problemData.description}
-              </p>
-            </div>
-
-            {/* Examples */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                Examples
-              </h3>
-              {problemData.examples.map((example, index) => (
-                <div key={index} className="p-4 rounded-lg bg-muted/50 border border-border space-y-2">
-                  <div className="font-mono text-sm">
-                    <span className="text-muted-foreground">Input: </span>
-                    <span className="text-foreground">{example.input}</span>
-                  </div>
-                  <div className="font-mono text-sm">
-                    <span className="text-muted-foreground">Output: </span>
-                    <span className="text-primary">{example.output}</span>
-                  </div>
-                  {example.explanation && (
-                    <div className="text-sm text-muted-foreground">
-                      <span className="font-medium">Explanation: </span>
-                      {example.explanation}
-                    </div>
-                  )}
+          {/* Tab Content */}
+          <div className="flex-1 overflow-auto scrollbar-thin">
+            {activeTab === "description" && (
+              <div className="p-6 space-y-6">
+                {/* Problem Statement */}
+                <div className="prose prose-invert max-w-none">
+                  <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                    {problemData.description}
+                  </p>
                 </div>
-              ))}
-            </div>
 
-            {/* Constraints */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                Constraints
-              </h3>
-              <ul className="space-y-1.5">
-                {problemData.constraints.map((constraint, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm">
-                    <span className="text-primary mt-1">•</span>
-                    <code className="text-foreground bg-muted px-1.5 py-0.5 rounded">
-                      {constraint}
-                    </code>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Hints */}
-            <div className="space-y-3">
-              <button
-                onClick={() => setShowHints(!showHints)}
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Lightbulb className="h-4 w-4" />
-                Hints ({problemData.hints.length})
-                <ChevronDown className={cn("h-4 w-4 transition-transform", showHints && "rotate-180")} />
-              </button>
-              {showHints && (
-                <div className="space-y-2 animate-fade-in">
-                  {problemData.hints.map((hint, index) => (
-                    <div key={index} className="p-3 rounded-lg bg-medium/10 border border-medium/20 text-sm">
-                      <span className="font-medium text-medium">Hint {index + 1}: </span>
-                      {hint}
+                {/* Examples */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                    Examples
+                  </h3>
+                  {problemData.examples.map((example, index) => (
+                    <div key={index} className="p-4 rounded-lg bg-muted/50 border border-border space-y-2">
+                      <div className="font-mono text-sm">
+                        <span className="text-muted-foreground">Input: </span>
+                        <span className="text-foreground">{example.input}</span>
+                      </div>
+                      <div className="font-mono text-sm">
+                        <span className="text-muted-foreground">Output: </span>
+                        <span className="text-primary">{example.output}</span>
+                      </div>
+                      {example.explanation && (
+                        <div className="text-sm text-muted-foreground">
+                          <span className="font-medium">Explanation: </span>
+                          {example.explanation}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
+
+                {/* Constraints */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                    Constraints
+                  </h3>
+                  <ul className="space-y-1.5">
+                    {problemData.constraints.map((constraint, index) => (
+                      <li key={index} className="flex items-start gap-2 text-sm">
+                        <span className="text-primary mt-1">•</span>
+                        <code className="text-foreground bg-muted px-1.5 py-0.5 rounded">
+                          {constraint}
+                        </code>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Hints */}
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setShowHints(!showHints)}
+                    className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Lightbulb className="h-4 w-4" />
+                    Hints ({problemData.hints.length})
+                    <ChevronDown className={cn("h-4 w-4 transition-transform", showHints && "rotate-180")} />
+                  </button>
+                  {showHints && (
+                    <div className="space-y-2 animate-fade-in">
+                      {problemData.hints.map((hint, index) => (
+                        <div key={index} className="p-3 rounded-lg bg-medium/10 border border-medium/20 text-sm">
+                          <span className="font-medium text-medium">Hint {index + 1}: </span>
+                          {hint}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "submissions" && (
+              <div className="p-6 space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">Your Submissions</h3>
+                  <span className="text-sm text-muted-foreground">{sampleSubmissions.length} total</span>
+                </div>
+                {sampleSubmissions.map((submission) => (
+                  <SubmissionCard
+                    key={submission.id}
+                    submission={submission}
+                    onClick={() => window.location.href = `/problem/${id}/submission/${submission.id}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {activeTab === "ai" && (
+              <LearnWithAI problemTitle={problemData.title} />
+            )}
           </div>
         </div>
 
         {/* Right Panel - Code Editor */}
-        <div className="w-1/2 flex flex-col">
+        <div className="lg:w-1/2 flex flex-col min-h-[50vh] lg:min-h-0">
           {/* Editor Toolbar */}
-          <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card">
+          <div className="shrink-0 flex items-center justify-between px-4 py-2 border-b border-border bg-card">
             <LanguageSelector value={language} onChange={handleLanguageChange} />
             <div className="flex items-center gap-2">
               <button
@@ -320,17 +361,17 @@ export default function ProblemPage() {
           </div>
 
           {/* Code Editor */}
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto scrollbar-thin">
             <CodeEditor
               value={code}
               onChange={setCode}
               language={language}
-              className="h-full min-h-[400px] rounded-none border-0"
+              className="h-full min-h-[300px] rounded-none border-0"
             />
           </div>
 
           {/* Test Cases & Console */}
-          <div className="h-64 border-t border-border flex flex-col bg-card">
+          <div className="shrink-0 h-48 lg:h-56 border-t border-border flex flex-col bg-card">
             <div className="flex items-center gap-2 px-4 py-2 border-b border-border">
               <button className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-secondary">
                 <CheckCircle2 className="h-4 w-4" />
@@ -341,10 +382,10 @@ export default function ProblemPage() {
                 Console
               </button>
             </div>
-            <div className="flex-1 overflow-auto p-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="flex-1 overflow-auto scrollbar-thin p-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <TestCasePanel testCases={testCases} />
-                <div className="p-3 rounded-lg bg-muted/50 border border-border font-mono text-xs">
+                <div className="p-3 rounded-lg bg-muted/50 border border-border font-mono text-xs overflow-auto">
                   {consoleOutput.length > 0 ? (
                     consoleOutput.map((line, i) => (
                       <div key={i} className={cn(
@@ -365,10 +406,10 @@ export default function ProblemPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card">
+          <div className="shrink-0 flex items-center justify-between px-4 py-3 border-t border-border bg-card">
             <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
               <MessageSquare className="h-4 w-4" />
-              Discuss
+              <span className="hidden sm:inline">Discuss</span>
             </button>
             <div className="flex items-center gap-3">
               <button

@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Code2, LayoutDashboard, Trophy, User, Zap } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function Header() {
   const location = useLocation();
@@ -45,6 +46,8 @@ export function Header() {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
+          <ThemeToggle />
+          
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary border border-border">
             <Zap className="h-4 w-4 text-medium" />
             <span className="text-sm font-medium">1,247</span>
