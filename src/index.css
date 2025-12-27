@@ -11,6 +11,74 @@
 
 @layer base {
   :root {
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 187 85% 43%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 210 20% 92%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 88%;
+    --input: 214 20% 91%;
+    --ring: 187 85% 43%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens for PacalTower */
+    --easy: 142 76% 36%;
+    --easy-foreground: 142 76% 96%;
+    --medium: 38 92% 50%;
+    --medium-foreground: 38 92% 10%;
+    --hard: 0 72% 51%;
+    --hard-foreground: 0 72% 96%;
+
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
+    --info: 210 100% 50%;
+
+    --glow-primary: 0 0 40px hsl(187 85% 43% / 0.15);
+    --glow-easy: 0 0 20px hsl(142 76% 36% / 0.2);
+    --glow-medium: 0 0 20px hsl(38 92% 50% / 0.2);
+    --glow-hard: 0 0 20px hsl(0 72% 51% / 0.2);
+
+    --gradient-hero: linear-gradient(135deg, hsl(187 85% 43%) 0%, hsl(210 100% 50%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
+    --gradient-surface: linear-gradient(135deg, hsl(210 20% 96%) 0%, hsl(210 20% 92%) 100%);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 187 85% 43%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 20% 88%;
+    --sidebar-ring: 187 85% 43%;
+
+    --chart-1: 187 85% 43%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 262 83% 58%;
+  }
+
+  .dark {
     --background: 222 47% 6%;
     --foreground: 210 40% 98%;
 
@@ -39,16 +107,6 @@
     --input: 222 30% 16%;
     --ring: 187 85% 53%;
 
-    --radius: 0.75rem;
-
-    /* Custom tokens for PacalTower */
-    --easy: 142 76% 36%;
-    --easy-foreground: 142 76% 96%;
-    --medium: 38 92% 50%;
-    --medium-foreground: 38 92% 10%;
-    --hard: 0 72% 51%;
-    --hard-foreground: 0 72% 96%;
-
     --glow-primary: 0 0 40px hsl(187 85% 53% / 0.25);
     --glow-easy: 0 0 20px hsl(142 76% 36% / 0.3);
     --glow-medium: 0 0 20px hsl(38 92% 50% / 0.3);
@@ -66,10 +124,12 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 222 30% 18%;
     --sidebar-ring: 187 85% 53%;
-  }
 
-  .dark {
-    /* Already dark theme by default */
+    --chart-1: 187 85% 53%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 262 83% 58%;
   }
 }
 
@@ -123,6 +183,29 @@
 
   .animate-pulse-slow {
     animation: pulse 3s ease-in-out infinite;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
   }
 
   @keyframes fadeIn {
