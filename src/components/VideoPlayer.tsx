@@ -9,8 +9,7 @@ import {
   Settings,
   SkipBack,
   SkipForward,
-  ThumbsUp,
-  ThumbsDown,
+  Heart,
   Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -47,7 +46,6 @@ export function VideoPlayer({ video, isFullscreen, onToggleFullscreen }: VideoPl
   const [volume, setVolume] = useState(80);
   const [showControls, setShowControls] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
-  const [isDisliked, setIsDisliked] = useState(false);
 
   const formatCount = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -170,42 +168,21 @@ export function VideoPlayer({ video, isFullscreen, onToggleFullscreen }: VideoPl
         </div>
       </div>
 
-      {/* Action Bar - Floating style */}
-      <div className="flex items-center justify-end gap-2 p-4 bg-gradient-to-r from-card to-secondary/30 border-t border-border">
+      {/* Action Bar - Clean style with heart and share */}
+      <div className="flex items-center justify-end gap-3 p-4 bg-gradient-to-r from-card to-secondary/30 border-t border-border">
         <Button
           variant={isLiked ? "default" : "ghost"}
           size="sm"
-          onClick={() => {
-            setIsLiked(!isLiked);
-            if (isDisliked) setIsDisliked(false);
-          }}
+          onClick={() => setIsLiked(!isLiked)}
           className={cn(
-            "gap-2 rounded-full",
+            "gap-2 rounded-full transition-all duration-300",
+            isLiked && "animate-heartbeat bg-rose-500 hover:bg-rose-600",
             !isLiked && "text-muted-foreground hover:text-foreground"
           )}
         >
-          <ThumbsUp className={cn("h-4 w-4", isLiked && "fill-current")} />
+          <Heart className={cn("h-4 w-4 transition-transform", isLiked && "fill-current scale-110")} />
           <span className="font-medium">{formatCount(video.likes + (isLiked ? 1 : 0))}</span>
         </Button>
-
-        <div className="w-px h-5 bg-border" />
-
-        <Button
-          variant={isDisliked ? "default" : "ghost"}
-          size="sm"
-          onClick={() => {
-            setIsDisliked(!isDisliked);
-            if (isLiked) setIsLiked(false);
-          }}
-          className={cn(
-            "rounded-full",
-            !isDisliked && "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <ThumbsDown className={cn("h-4 w-4", isDisliked && "fill-current")} />
-        </Button>
-
-        <div className="w-px h-5 bg-border" />
 
         <Button variant="ghost" size="sm" className="gap-2 rounded-full text-muted-foreground hover:text-foreground">
           <Share2 className="h-4 w-4" />
