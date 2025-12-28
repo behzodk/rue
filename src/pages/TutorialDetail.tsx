@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { CommentSection } from "@/components/CommentSection";
-import { ChevronLeft, Eye, ThumbsUp, Calendar, Clock, Users, Check, Heart } from "lucide-react";
+import { ChevronLeft, Eye, ThumbsUp, Calendar, Clock, Users, Check, Heart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -283,43 +283,55 @@ export default function TutorialDetail() {
             </div>
             
             {/* Like Button with Animation */}
-            <button
-              onClick={() => {
-                setLikeAnimating(true);
-                setIsLiked(!isLiked);
-                setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-                setTimeout(() => setLikeAnimating(false), 600);
-              }}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
-                "border-2",
-                isLiked 
-                  ? "bg-rose-500/10 border-rose-500/50 text-rose-500" 
-                  : "bg-secondary/50 border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground"
-              )}
-            >
-              <div className={cn(
-                "relative transition-transform duration-300",
-                likeAnimating && "animate-[heartbeat_0.6s_ease-in-out]"
-              )}>
-                <Heart className={cn(
-                  "h-5 w-5 transition-all duration-300",
-                  isLiked && "fill-rose-500 text-rose-500"
-                )} />
-                {likeAnimating && isLiked && (
-                  <>
-                    <Heart className="absolute inset-0 h-5 w-5 fill-rose-500 text-rose-500 animate-ping" />
-                    <div className="absolute -inset-2 rounded-full bg-rose-500/20 animate-ping" />
-                  </>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setLikeAnimating(true);
+                  setIsLiked(!isLiked);
+                  setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+                  setTimeout(() => setLikeAnimating(false), 600);
+                }}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                  "border-2",
+                  isLiked 
+                    ? "bg-rose-500/10 border-rose-500/50 text-rose-500" 
+                    : "bg-secondary/50 border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground"
                 )}
-              </div>
-              <span className={cn(
-                "transition-all duration-300",
-                likeAnimating && "scale-110"
-              )}>
-                {formatCount(likeCount)}
-              </span>
-            </button>
+              >
+                <div className={cn(
+                  "relative transition-transform duration-300",
+                  likeAnimating && "animate-[heartbeat_0.6s_ease-in-out]"
+                )}>
+                  <Heart className={cn(
+                    "h-5 w-5 transition-all duration-300",
+                    isLiked && "fill-rose-500 text-rose-500"
+                  )} />
+                  {likeAnimating && isLiked && (
+                    <>
+                      <Heart className="absolute inset-0 h-5 w-5 fill-rose-500 text-rose-500 animate-ping" />
+                      <div className="absolute -inset-2 rounded-full bg-rose-500/20 animate-ping" />
+                    </>
+                  )}
+                </div>
+                <span className={cn(
+                  "transition-all duration-300",
+                  likeAnimating && "scale-110"
+                )}>
+                  {formatCount(likeCount)}
+                </span>
+              </button>
+
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 border-2 bg-secondary/50 border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground"
+              >
+                <Share2 className="h-5 w-5" />
+                <span>Share</span>
+              </button>
+            </div>
           </div>
 
           {/* Author Card */}
