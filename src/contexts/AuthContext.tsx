@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const defaultUser: User = {
   id: "1",
   name: "Alex Developer",
-  email: "alex@pacaltower.dev",
+  email: "alex@pacaltower.com",
   avatar: undefined,
 };
 
