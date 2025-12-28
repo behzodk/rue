@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Code2, LayoutDashboard, Trophy, User, Zap, LogOut, Menu, X } from "lucide-react";
+import { Code2, LayoutDashboard, Trophy, User, Zap, LogOut, Menu, X, PlayCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -13,6 +13,7 @@ export function Header() {
 
   const navItems = [
     { href: "/dashboard", label: "Problems", icon: LayoutDashboard },
+    { href: "/tutorials", label: "Tutorials", icon: PlayCircle },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   ];
 

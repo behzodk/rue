@@ -13,6 +13,7 @@ import Leaderboard from "./pages/Leaderboard";
 import ProblemLeaderboard from "./pages/ProblemLeaderboard";
 import SubmissionDetail from "./pages/SubmissionDetail";
 import Profile from "./pages/Profile";
+import Tutorials from "./pages/Tutorials";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -94,6 +95,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Leaderboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/tutorials" 
+        element={
+          <ProtectedRoute>
+            <Tutorials />
           </ProtectedRoute>
         } 
       />
