@@ -211,36 +211,6 @@ export default function Tutorials() {
           ))}
         </div>
 
-        {/* Quick Stats - Responsive */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/50 border border-border">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <TrendingUp className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Trending</p>
-              <p className="font-semibold text-foreground">24 Videos</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/50 border border-border">
-            <div className="p-2 rounded-lg bg-medium/10">
-              <Clock className="h-5 w-5 text-medium" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Watch Time</p>
-              <p className="font-semibold text-foreground">12.5 hrs</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/50 border border-border">
-            <div className="p-2 rounded-lg bg-easy/10">
-              <Star className="h-5 w-5 text-easy" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Completed</p>
-              <p className="font-semibold text-foreground">8 Videos</p>
-            </div>
-          </div>
-        </div>
 
         {/* YouTube-Style Video Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
