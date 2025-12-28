@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { CodeEditor } from "@/components/CodeEditor";
 import { LanguageSelector } from "@/components/LanguageSelector";
@@ -21,8 +21,16 @@ import {
   Lightbulb,
   Terminal,
   Bot,
-  Trophy
+  Trophy,
+  Search,
+  Sparkles
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Sample problem data
 const problemData = {
@@ -121,6 +129,7 @@ public:
 
 export default function ProblemPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [language, setLanguage] = useState("javascript");
   const [code, setCode] = useState(starterCode.javascript);
   const [activeTab, setActiveTab] = useState<"description" | "submissions" | "ai">("description");
@@ -222,26 +231,66 @@ export default function ProblemPage() {
         <div className="lg:w-1/2 flex flex-col border-b lg:border-b-0 lg:border-r border-border min-h-[50vh] lg:min-h-0 lg:h-full">
           {/* Tabs */}
           <div className="shrink-0 border-b border-border bg-card">
-            <div className="flex">
-              {[
-                { id: "description", label: "Description", icon: BookOpen },
-                { id: "submissions", label: "Submissions", icon: Clock },
-                { id: "ai", label: "Learn with AI", icon: Bot },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px",
-                    activeTab === tab.id
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <tab.icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </button>
-              ))}
+            <div className="flex items-center justify-between">
+              <div className="flex">
+                {[
+                  { id: "description", label: "Description", icon: BookOpen },
+                  { id: "submissions", label: "Submissions", icon: Clock },
+                  { id: "ai", label: "Learn with AI", icon: Bot },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px",
+                      activeTab === tab.id
+                        ? "border-primary text-primary"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <tab.icon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+              
+              {/* Search Tutorials Button with Tooltip */}
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => navigate("/tutorials")}
+                      className="mr-3 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-secondary/50 border border-border hover:bg-accent hover:border-primary/30 transition-all duration-200 group"
+                    >
+                      <Search className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <span className="hidden sm:inline text-muted-foreground group-hover:text-foreground transition-colors">Search Tutorials</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent 
+                    side="bottom" 
+                    className="max-w-xs p-4 bg-popover border border-border shadow-xl"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-primary font-medium">
+                        <Sparkles className="h-4 w-4" />
+                        <span>Pro tip!</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Try <span className="text-foreground font-medium">Learn with AI</span> mode first! It adapts to your level and guides you step-by-step instead of just showing solutions.
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveTab("ai");
+                        }}
+                        className="mt-1 text-xs text-primary hover:underline"
+                      >
+                        → Start learning with AI
+                      </button>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
 

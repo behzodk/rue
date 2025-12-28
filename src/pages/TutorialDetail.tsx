@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { CommentSection } from "@/components/CommentSection";
-import { ChevronLeft, Eye, ThumbsUp, Calendar, Tag, Clock, Users } from "lucide-react";
+import { ChevronLeft, Eye, ThumbsUp, Calendar, Clock, Users, Check, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -193,8 +193,18 @@ const mockComments = [
 export default function TutorialDetail() {
   const { id } = useParams();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [subscribeAnimating, setSubscribeAnimating] = useState(false);
+  const [likeAnimating, setLikeAnimating] = useState(false);
 
   const video = mockVideos.find((v) => v.id === id) || mockVideos[0];
+
+  // Initialize like count from video data
+  useState(() => {
+    setLikeCount(video.likes);
+  });
 
   const formatCount = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -255,24 +265,61 @@ export default function TutorialDetail() {
             </h1>
           </div>
 
-          {/* Stats Row */}
-          <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground py-4 border-y border-border">
-            <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              <span>{formatCount(video.views)} views</span>
+          {/* Stats Row with Like Button */}
+          <div className="flex flex-wrap items-center justify-between gap-4 py-4 border-y border-border">
+            <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                <span>{formatCount(video.views)} views</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>{video.duration}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>{formatDate(video.publishedAt)}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <ThumbsUp className="h-4 w-4" />
-              <span>{formatCount(video.likes)} likes</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              <span>{video.duration}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span>{formatDate(video.publishedAt)}</span>
-            </div>
+            
+            {/* Like Button with Animation */}
+            <button
+              onClick={() => {
+                setLikeAnimating(true);
+                setIsLiked(!isLiked);
+                setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+                setTimeout(() => setLikeAnimating(false), 600);
+              }}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
+                "border-2",
+                isLiked 
+                  ? "bg-rose-500/10 border-rose-500/50 text-rose-500" 
+                  : "bg-secondary/50 border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground"
+              )}
+            >
+              <div className={cn(
+                "relative transition-transform duration-300",
+                likeAnimating && "animate-[heartbeat_0.6s_ease-in-out]"
+              )}>
+                <Heart className={cn(
+                  "h-5 w-5 transition-all duration-300",
+                  isLiked && "fill-rose-500 text-rose-500"
+                )} />
+                {likeAnimating && isLiked && (
+                  <>
+                    <Heart className="absolute inset-0 h-5 w-5 fill-rose-500 text-rose-500 animate-ping" />
+                    <div className="absolute -inset-2 rounded-full bg-rose-500/20 animate-ping" />
+                  </>
+                )}
+              </div>
+              <span className={cn(
+                "transition-all duration-300",
+                likeAnimating && "scale-110"
+              )}>
+                {formatCount(likeCount)}
+              </span>
+            </button>
           </div>
 
           {/* Author Card */}
@@ -295,10 +342,68 @@ export default function TutorialDetail() {
               </div>
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <Users className="h-3.5 w-3.5" />
-                {formatCount(video.author.subscribers)} subscribers
+                {formatCount(video.author.subscribers + (isSubscribed ? 1 : 0))} subscribers
               </p>
             </div>
-            <Button className="rounded-full px-6">Subscribe</Button>
+            
+            {/* Subscribe Button with Animation */}
+            <button
+              onClick={() => {
+                setSubscribeAnimating(true);
+                setIsSubscribed(!isSubscribed);
+                setTimeout(() => setSubscribeAnimating(false), 600);
+              }}
+              className={cn(
+                "relative rounded-full px-6 py-2.5 font-medium text-sm transition-all duration-300 overflow-hidden",
+                isSubscribed
+                  ? "bg-secondary border-2 border-border text-foreground"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+              )}
+            >
+              {/* Ripple Effect */}
+              {subscribeAnimating && (
+                <div className={cn(
+                  "absolute inset-0 rounded-full animate-ping",
+                  isSubscribed ? "bg-primary/30" : "bg-primary-foreground/30"
+                )} />
+              )}
+              
+              <span className={cn(
+                "relative flex items-center gap-2 transition-transform duration-300",
+                subscribeAnimating && "scale-95"
+              )}>
+                {isSubscribed && (
+                  <Check className={cn(
+                    "h-4 w-4 transition-all duration-300",
+                    subscribeAnimating ? "scale-150 opacity-0" : "scale-100 opacity-100"
+                  )} />
+                )}
+                <span className={cn(
+                  "transition-all duration-300",
+                  subscribeAnimating && "translate-x-1"
+                )}>
+                  {isSubscribed ? "Subscribed" : "Subscribe"}
+                </span>
+              </span>
+              
+              {/* Success Particles */}
+              {subscribeAnimating && isSubscribed && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {[...Array(6)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute w-1.5 h-1.5 bg-primary rounded-full animate-particle"
+                      style={{
+                        left: '50%',
+                        top: '50%',
+                        transform: `rotate(${i * 60}deg) translateY(-20px)`,
+                        animationDelay: `${i * 50}ms`
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </button>
           </div>
 
           {/* Description */}
