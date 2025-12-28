@@ -1,15 +1,23 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Code2, LayoutDashboard, Trophy, User, Zap } from "lucide-react";
+import { Code2, LayoutDashboard, Trophy, User, Zap, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const navItems = [
-    { href: "/", label: "Problems", icon: LayoutDashboard },
+    { href: "/dashboard", label: "Problems", icon: LayoutDashboard },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   ];
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -58,6 +66,14 @@ export function Header() {
             <User className="h-5 w-5" />
             <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-easy border-2 border-background" />
           </Link>
+
+          <button 
+            onClick={handleLogout}
+            className="p-2 rounded-full bg-secondary border border-border hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive transition-colors"
+            title="Logout"
+          >
+            <LogOut className="h-5 w-5" />
+          </button>
         </div>
       </div>
     </header>
