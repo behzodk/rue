@@ -3,9 +3,11 @@ import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { CommentSection } from "@/components/CommentSection";
-import { ChevronLeft, Eye, ThumbsUp, Calendar, Clock, Users, Check, Heart, Share2 } from "lucide-react";
+import { ChevronLeft, Eye, ThumbsUp, Calendar, Clock, Users, Check, Heart, Share2, Copy, Twitter, Facebook, Linkedin, Mail, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data
 const mockVideos = [
@@ -192,19 +194,38 @@ const mockComments = [
 
 export default function TutorialDetail() {
   const { id } = useParams();
+  const { toast } = useToast();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [subscribeAnimating, setSubscribeAnimating] = useState(false);
   const [likeAnimating, setLikeAnimating] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const video = mockVideos.find((v) => v.id === id) || mockVideos[0];
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   // Initialize like count from video data
   useState(() => {
     setLikeCount(video.likes);
   });
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shareUrl);
+    toast({
+      title: "Link copied!",
+      description: "The tutorial link has been copied to your clipboard.",
+    });
+  };
+
+  const shareOptions = [
+    { name: "Copy Link", icon: Copy, action: copyToClipboard, color: "bg-secondary hover:bg-secondary/80" },
+    { name: "Twitter", icon: Twitter, action: () => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(video.title)}`, '_blank'), color: "bg-[#1DA1F2]/10 hover:bg-[#1DA1F2]/20 text-[#1DA1F2]" },
+    { name: "Facebook", icon: Facebook, action: () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank'), color: "bg-[#4267B2]/10 hover:bg-[#4267B2]/20 text-[#4267B2]" },
+    { name: "LinkedIn", icon: Linkedin, action: () => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank'), color: "bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 text-[#0A66C2]" },
+    { name: "Email", icon: Mail, action: () => window.open(`mailto:?subject=${encodeURIComponent(video.title)}&body=${encodeURIComponent(shareUrl)}`, '_blank'), color: "bg-primary/10 hover:bg-primary/20 text-primary" },
+  ];
 
   const formatCount = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -323,14 +344,70 @@ export default function TutorialDetail() {
               </button>
 
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                }}
+                onClick={() => setShareDialogOpen(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 border-2 bg-secondary/50 border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground"
               >
                 <Share2 className="h-5 w-5" />
                 <span>Share</span>
               </button>
+
+              {/* Share Dialog */}
+              <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+                <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-xl border-border/50">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold">Share this tutorial</DialogTitle>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4 py-4">
+                    {/* Tutorial Preview */}
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
+                      <img 
+                        src={video.thumbnail} 
+                        alt={video.title}
+                        className="w-20 h-12 object-cover rounded-lg"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{video.title}</p>
+                        <p className="text-xs text-muted-foreground">{video.author.name}</p>
+                      </div>
+                    </div>
+
+                    {/* Share Options */}
+                    <div className="grid grid-cols-5 gap-3">
+                      {shareOptions.map((option) => (
+                        <button
+                          key={option.name}
+                          onClick={() => {
+                            option.action();
+                            if (option.name !== "Copy Link") setShareDialogOpen(false);
+                          }}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200",
+                            option.color
+                          )}
+                        >
+                          <option.icon className="h-5 w-5" />
+                          <span className="text-xs font-medium">{option.name}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Copy URL Input */}
+                    <div className="flex items-center gap-2 p-2 rounded-xl bg-secondary/50 border border-border">
+                      <input
+                        type="text"
+                        value={shareUrl}
+                        readOnly
+                        className="flex-1 bg-transparent text-sm text-muted-foreground outline-none px-2"
+                      />
+                      <Button size="sm" variant="secondary" onClick={copyToClipboard} className="gap-2">
+                        <Copy className="h-4 w-4" />
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
