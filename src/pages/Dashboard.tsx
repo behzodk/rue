@@ -3,8 +3,8 @@ import { Header } from "@/components/Header";
 import { ProblemCard, type Problem } from "@/components/ProblemCard";
 import { StatsCard } from "@/components/StatsCard";
 import { DifficultyBadge, type Difficulty } from "@/components/DifficultyBadge";
-import { LearningPathwaysSidebar } from "@/components/LearningPathwaysSidebar";
-import { DashboardCalendar } from "@/components/DashboardCalendar";
+import { LearningPathwaysSidebar, LearningPathwaysTrigger } from "@/components/LearningPathwaysSidebar";
+import { DashboardCalendar, CalendarTrigger } from "@/components/DashboardCalendar";
 import { cn } from "@/lib/utils";
 import { 
   Target, 
@@ -46,6 +46,8 @@ export default function Dashboard() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | "All">("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
+  const [isPathwaysOpen, setIsPathwaysOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const filteredProblems = sampleProblems.filter((problem) => {
     const matchesSearch = problem.title.toLowerCase().includes(search.toLowerCase());
@@ -62,23 +64,35 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container py-6">
+      {/* Mobile Sheets */}
+      <LearningPathwaysSidebar 
+        isMobile 
+        isOpen={isPathwaysOpen} 
+        onOpenChange={setIsPathwaysOpen} 
+      />
+      <DashboardCalendar 
+        isMobile 
+        isOpen={isCalendarOpen} 
+        onOpenChange={setIsCalendarOpen} 
+      />
+
+      <main className="container py-4 md:py-6">
         {/* Three Column Layout */}
         <div className="flex gap-6">
-          {/* Left Sidebar - Learning Pathways */}
+          {/* Left Sidebar - Learning Pathways (Desktop) */}
           <LearningPathwaysSidebar />
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
             {/* Welcome Banner */}
-            <div className="relative mb-6 p-6 rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/5 overflow-hidden">
+            <div className="relative mb-4 md:mb-6 p-4 md:p-6 rounded-xl md:rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/5 overflow-hidden">
               {/* Background Elements */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-3xl rounded-full" />
-              <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-easy/10 blur-3xl rounded-full" />
-              <div className="absolute top-10 right-20 w-32 h-32 bg-medium/10 blur-2xl rounded-full" />
+              <div className="absolute top-0 right-0 w-32 md:w-64 h-32 md:h-64 bg-primary/10 blur-3xl rounded-full" />
+              <div className="absolute -bottom-20 -left-20 w-24 md:w-48 h-24 md:h-48 bg-easy/10 blur-3xl rounded-full" />
+              <div className="absolute top-10 right-20 w-16 md:w-32 h-16 md:h-32 bg-medium/10 blur-2xl rounded-full hidden sm:block" />
               
               {/* Grid Pattern */}
-              <div className="absolute inset-0 opacity-5">
+              <div className="absolute inset-0 opacity-5 hidden sm:block">
                 <svg className="w-full h-full">
                   <defs>
                     <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -89,21 +103,21 @@ export default function Dashboard() {
                 </svg>
               </div>
               
-              <div className="relative flex items-center justify-between">
+              <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-                    <span className="text-xs font-medium text-primary uppercase tracking-wider">Daily Progress</span>
+                    <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-primary animate-pulse" />
+                    <span className="text-[10px] md:text-xs font-medium text-primary uppercase tracking-wider">Daily Progress</span>
                   </div>
-                  <h1 className="text-2xl md:text-3xl font-bold mb-2">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 md:mb-2">
                     Welcome back, <span className="text-gradient">Developer</span>
                   </h1>
-                  <p className="text-muted-foreground max-w-lg">
+                  <p className="text-sm text-muted-foreground max-w-lg">
                     You've solved {solvedCount} problems. Keep pushing to reach your daily goal!
                   </p>
                 </div>
 
-                {/* Quick Action */}
+                {/* Quick Action - Hidden on mobile */}
                 <div className="hidden lg:flex items-center gap-3">
                   <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
                     <div className="flex items-center gap-3">
@@ -122,7 +136,7 @@ export default function Dashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 mb-4 md:mb-6">
               <StatsCard
                 title="Problems Solved"
                 value={solvedCount}
@@ -153,10 +167,14 @@ export default function Dashboard() {
             </div>
 
             {/* Filters Section */}
-            <div className="mb-5 space-y-3">
-              <div className="flex flex-col sm:flex-row gap-3">
+            <div className="mb-4 md:mb-5 space-y-3">
+              <div className="flex flex-wrap gap-2 md:gap-3">
+                {/* Mobile Sidebar Triggers */}
+                <LearningPathwaysTrigger onClick={() => setIsPathwaysOpen(true)} />
+                <CalendarTrigger onClick={() => setIsCalendarOpen(true)} />
+
                 {/* Search */}
-                <div className="relative flex-1">
+                <div className="relative flex-1 min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input
                     type="text"
@@ -183,27 +201,27 @@ export default function Dashboard() {
                   )}
                 >
                   <Filter className="h-4 w-4" />
-                  Filters
-                  <ChevronDown className={cn("h-4 w-4 transition-transform", showFilters && "rotate-180")} />
+                  <span className="hidden sm:inline">Filters</span>
+                  <ChevronDown className={cn("h-4 w-4 transition-transform hidden sm:block", showFilters && "rotate-180")} />
                 </button>
               </div>
 
               {/* Expanded Filters */}
               {showFilters && (
-                <div className="p-4 rounded-xl border border-border bg-card animate-fade-in">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-3 md:p-4 rounded-xl border border-border bg-card animate-fade-in">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                     {/* Difficulty Filter */}
                     <div>
                       <label className="text-xs font-medium text-muted-foreground mb-2 block uppercase tracking-wider">
                         Difficulty
                       </label>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1.5 md:gap-2">
                         {difficulties.map((diff) => (
                           <button
                             key={diff}
                             onClick={() => setSelectedDifficulty(diff)}
                             className={cn(
-                              "px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+                              "px-2.5 md:px-3 py-1 md:py-1.5 rounded-lg text-xs font-medium transition-all",
                               selectedDifficulty === diff
                                 ? "bg-primary text-primary-foreground shadow-md"
                                 : "bg-secondary hover:bg-accent"
@@ -236,17 +254,17 @@ export default function Dashboard() {
                     </div>
 
                     {/* Status Filter */}
-                    <div>
+                    <div className="sm:col-span-2 lg:col-span-1">
                       <label className="text-xs font-medium text-muted-foreground mb-2 block uppercase tracking-wider">
                         Status
                       </label>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1.5 md:gap-2">
                         {statuses.map((status) => (
                           <button
                             key={status}
                             onClick={() => setSelectedStatus(status)}
                             className={cn(
-                              "px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+                              "px-2.5 md:px-3 py-1 md:py-1.5 rounded-lg text-xs font-medium transition-all",
                               selectedStatus === status
                                 ? "bg-primary text-primary-foreground shadow-md"
                                 : "bg-secondary hover:bg-accent"
@@ -264,24 +282,24 @@ export default function Dashboard() {
 
             {/* Problem List */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between mb-4 px-1">
-                <h2 className="text-base font-semibold flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 md:mb-4 px-1">
+                <h2 className="text-sm md:text-base font-semibold flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-primary" />
                   Problem Set
                   <span className="text-xs font-normal text-muted-foreground">
                     ({filteredProblems.length})
                   </span>
                 </h2>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2 md:gap-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
                     <DifficultyBadge difficulty="Easy" />
                     <span>{sampleProblems.filter(p => p.difficulty === "Easy").length}</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     <DifficultyBadge difficulty="Medium" />
                     <span>{sampleProblems.filter(p => p.difficulty === "Medium").length}</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     <DifficultyBadge difficulty="Hard" />
                     <span>{sampleProblems.filter(p => p.difficulty === "Hard").length}</span>
                   </div>
@@ -295,9 +313,9 @@ export default function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="py-16 text-center rounded-xl border border-dashed border-border bg-card/50">
-                  <Search className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                  <p className="text-muted-foreground">No problems found matching your criteria.</p>
+                <div className="py-12 md:py-16 text-center rounded-xl border border-dashed border-border bg-card/50">
+                  <Search className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm text-muted-foreground">No problems found matching your criteria.</p>
                   <button 
                     onClick={() => {
                       setSearch("");
@@ -314,7 +332,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right Sidebar - Calendar */}
+          {/* Right Sidebar - Calendar (Desktop) */}
           <DashboardCalendar />
         </div>
       </main>
