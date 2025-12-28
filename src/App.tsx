@@ -15,6 +15,7 @@ import SubmissionDetail from "./pages/SubmissionDetail";
 import Profile from "./pages/Profile";
 import Tutorials from "./pages/Tutorials";
 import TutorialDetail from "./pages/TutorialDetail";
+import Subscriptions from "./pages/Subscriptions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -105,6 +106,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <TutorialDetail />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/subscriptions" 
+        element={
+          <ProtectedRoute>
+            <Subscriptions />
           </ProtectedRoute>
         } 
       />
