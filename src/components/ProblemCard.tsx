@@ -28,7 +28,7 @@ export function ProblemCard({ problem, index }: ProblemCardProps) {
     <Link
       to={`/problem/${problem.id}`}
       className={cn(
-        "group relative block p-4 rounded-lg border border-border bg-card",
+        "group relative block p-3 md:p-4 rounded-lg border border-border bg-card",
         "hover:border-primary/40 hover:bg-accent/50 transition-all duration-300",
         "animate-slide-up"
       )}
@@ -36,27 +36,31 @@ export function ProblemCard({ problem, index }: ProblemCardProps) {
     >
       <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       
-      <div className="relative flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          {statusIcon[problem.status]}
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-sm font-mono">
+      <div className="relative flex items-center justify-between gap-2 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+          <div className="flex-shrink-0">
+            {statusIcon[problem.status]}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <span className="text-muted-foreground text-xs md:text-sm font-mono flex-shrink-0">
                 #{problem.id}
               </span>
-              <h3 className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
+              <h3 className="font-medium text-sm md:text-base text-foreground truncate group-hover:text-primary transition-colors">
                 {problem.title}
               </h3>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-muted-foreground">{problem.category}</span>
-              <span className="text-xs text-muted-foreground">•</span>
-              <span className="text-xs text-muted-foreground">{problem.acceptance}% acceptance</span>
+            <div className="flex items-center gap-1.5 md:gap-2 mt-0.5 md:mt-1">
+              <span className="text-[10px] md:text-xs text-muted-foreground truncate">{problem.category}</span>
+              <span className="text-[10px] md:text-xs text-muted-foreground hidden sm:inline">•</span>
+              <span className="text-[10px] md:text-xs text-muted-foreground hidden sm:inline">{problem.acceptance}%</span>
             </div>
           </div>
         </div>
         
-        <DifficultyBadge difficulty={problem.difficulty} />
+        <div className="flex-shrink-0">
+          <DifficultyBadge difficulty={problem.difficulty} />
+        </div>
       </div>
     </Link>
   );
