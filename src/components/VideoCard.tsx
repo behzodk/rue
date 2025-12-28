@@ -1,4 +1,4 @@
-import { Play, Eye, ThumbsUp, MessageCircle, Clock } from "lucide-react";
+import { Play, Eye, ThumbsUp, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface VideoCardProps {
@@ -8,7 +8,7 @@ interface VideoCardProps {
   duration: string;
   views: number;
   likes: number;
-  comments: number;
+  comments?: number;
   author: {
     name: string;
     avatar: string;
@@ -18,6 +18,7 @@ interface VideoCardProps {
   category: string;
   isSelected?: boolean;
   onClick?: () => void;
+  compact?: boolean;
 }
 
 export function VideoCard({
@@ -26,18 +27,72 @@ export function VideoCard({
   duration,
   views,
   likes,
-  comments,
   author,
   difficulty,
   category,
   isSelected,
   onClick,
+  compact = false,
 }: VideoCardProps) {
   const formatCount = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toString();
   };
+
+  if (compact) {
+    return (
+      <div
+        onClick={onClick}
+        className={cn(
+          "group cursor-pointer flex gap-3 p-2 rounded-lg transition-all duration-200",
+          isSelected
+            ? "bg-primary/10 border border-primary/30"
+            : "hover:bg-accent/50"
+        )}
+      >
+        {/* Thumbnail */}
+        <div className="relative w-40 flex-shrink-0 aspect-video rounded-lg overflow-hidden bg-secondary">
+          <img
+            src={thumbnail}
+            alt={title}
+            className="w-full h-full object-cover"
+          />
+          
+          {/* Play overlay */}
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <Play className="h-4 w-4 text-white fill-current" />
+          </div>
+
+          {/* Duration badge */}
+          <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-medium text-white">
+            {duration}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0 py-1">
+          <h4 className="font-medium text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+            {title}
+          </h4>
+          <p className="text-xs text-muted-foreground mt-1">{author.name}</p>
+          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+            <span>{formatCount(views)} views</span>
+            {difficulty && (
+              <span className={cn(
+                "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase",
+                difficulty === "easy" && "bg-easy/20 text-easy",
+                difficulty === "medium" && "bg-medium/20 text-medium",
+                difficulty === "hard" && "bg-hard/20 text-hard"
+              )}>
+                {difficulty}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -123,10 +178,6 @@ export function VideoCard({
           <div className="flex items-center gap-1">
             <ThumbsUp className="h-3.5 w-3.5" />
             <span>{formatCount(likes)}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <MessageCircle className="h-3.5 w-3.5" />
-            <span>{formatCount(comments)}</span>
           </div>
         </div>
       </div>

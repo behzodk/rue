@@ -14,6 +14,7 @@ import ProblemLeaderboard from "./pages/ProblemLeaderboard";
 import SubmissionDetail from "./pages/SubmissionDetail";
 import Profile from "./pages/Profile";
 import Tutorials from "./pages/Tutorials";
+import TutorialDetail from "./pages/TutorialDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -98,11 +99,12 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
+      <Route path="/tutorials" element={<Tutorials />} />
       <Route 
-        path="/tutorials" 
+        path="/tutorial/:id" 
         element={
           <ProtectedRoute>
-            <Tutorials />
+            <TutorialDetail />
           </ProtectedRoute>
         } 
       />

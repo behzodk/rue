@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Code2, LayoutDashboard, Trophy, User, Zap, LogOut, Menu, X, PlayCircle } from "lucide-react";
+import { Code2, LayoutDashboard, Trophy, User, Zap, LogOut, Menu, X, PlayCircle, LogIn } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -63,24 +64,35 @@ export function Header() {
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
             
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary border border-border">
-              <Zap className="h-4 w-4 text-medium" />
-              <span className="text-sm font-medium">1,247</span>
-              <span className="text-xs text-muted-foreground">pts</span>
-            </div>
-            
-            <Link to="/profile" className="relative p-2 rounded-full bg-secondary border border-border hover:bg-accent transition-colors">
-              <User className="h-5 w-5" />
-              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-easy border-2 border-background" />
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary border border-border">
+                  <Zap className="h-4 w-4 text-medium" />
+                  <span className="text-sm font-medium">1,247</span>
+                  <span className="text-xs text-muted-foreground">pts</span>
+                </div>
+                
+                <Link to="/profile" className="relative p-2 rounded-full bg-secondary border border-border hover:bg-accent transition-colors">
+                  <User className="h-5 w-5" />
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-easy border-2 border-background" />
+                </Link>
 
-            <button 
-              onClick={handleLogout}
-              className="p-2 rounded-full bg-secondary border border-border hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive transition-colors"
-              title="Logout"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
+                <button 
+                  onClick={handleLogout}
+                  className="p-2 rounded-full bg-secondary border border-border hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </>
+            ) : (
+              <Link to="/auth">
+                <Button variant="default" size="sm" className="gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile: Theme toggle + Hamburger */}
@@ -124,26 +136,39 @@ export function Header() {
           </button>
         </div>
 
-        {/* User Section */}
-        <div className="p-4 border-b border-border">
-          <Link 
-            to="/profile" 
-            onClick={closeMobileMenu}
-            className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border hover:bg-accent transition-colors"
-          >
-            <div className="relative p-2 rounded-full bg-primary/10 border border-primary/20">
-              <User className="h-5 w-5 text-primary" />
-              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-easy border-2 border-background" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">View Profile</p>
-              <div className="flex items-center gap-1 mt-0.5">
-                <Zap className="h-3 w-3 text-medium" />
-                <span className="text-xs text-muted-foreground">1,247 pts</span>
+        {/* User Section - Only show when authenticated */}
+        {isAuthenticated ? (
+          <div className="p-4 border-b border-border">
+            <Link 
+              to="/profile" 
+              onClick={closeMobileMenu}
+              className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border hover:bg-accent transition-colors"
+            >
+              <div className="relative p-2 rounded-full bg-primary/10 border border-primary/20">
+                <User className="h-5 w-5 text-primary" />
+                <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-easy border-2 border-background" />
               </div>
-            </div>
-          </Link>
-        </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">View Profile</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <Zap className="h-3 w-3 text-medium" />
+                  <span className="text-xs text-muted-foreground">1,247 pts</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+        ) : (
+          <div className="p-4 border-b border-border">
+            <Link 
+              to="/auth" 
+              onClick={closeMobileMenu}
+              className="flex items-center justify-center gap-2 p-3 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+            >
+              <LogIn className="h-5 w-5" />
+              Sign In / Sign Up
+            </Link>
+          </div>
+        )}
 
         {/* Navigation */}
         <nav className="p-4 space-y-2">
@@ -166,16 +191,18 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Actions */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-background/80 backdrop-blur-sm">
-          <button 
-            onClick={handleLogout}
-            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive hover:bg-destructive/20 transition-colors"
-          >
-            <LogOut className="h-5 w-5" />
-            <span className="font-medium">Logout</span>
-          </button>
-        </div>
+        {/* Actions - Only show logout when authenticated */}
+        {isAuthenticated && (
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-background/80 backdrop-blur-sm">
+            <button 
+              onClick={handleLogout}
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive hover:bg-destructive/20 transition-colors"
+            >
+              <LogOut className="h-5 w-5" />
+              <span className="font-medium">Logout</span>
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
