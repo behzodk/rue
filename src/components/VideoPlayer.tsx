@@ -168,27 +168,6 @@ export function VideoPlayer({ video, isFullscreen, onToggleFullscreen }: VideoPl
         </div>
       </div>
 
-      {/* Action Bar - Clean style with heart and share */}
-      <div className="flex items-center justify-end gap-3 p-4 bg-gradient-to-r from-card to-secondary/30 border-t border-border">
-        <Button
-          variant={isLiked ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setIsLiked(!isLiked)}
-          className={cn(
-            "gap-2 rounded-full transition-all duration-300",
-            isLiked && "animate-heartbeat bg-rose-500 hover:bg-rose-600",
-            !isLiked && "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <Heart className={cn("h-4 w-4 transition-transform", isLiked && "fill-current scale-110")} />
-          <span className="font-medium">{formatCount(video.likes + (isLiked ? 1 : 0))}</span>
-        </Button>
-
-        <Button variant="ghost" size="sm" className="gap-2 rounded-full text-muted-foreground hover:text-foreground">
-          <Share2 className="h-4 w-4" />
-          <span>Share</span>
-        </Button>
-      </div>
     </div>
   );
 }
