@@ -3,13 +3,11 @@ import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { CommentSection } from "@/components/CommentSection";
-import { VideoCard } from "@/components/VideoCard";
-import { ChevronLeft, Eye, ThumbsUp, Calendar, Tag } from "lucide-react";
+import { ChevronLeft, Eye, ThumbsUp, Calendar, Tag, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-// Mock data - same as Tutorials
+// Mock data
 const mockVideos = [
   {
     id: "1",
@@ -195,10 +193,8 @@ const mockComments = [
 export default function TutorialDetail() {
   const { id } = useParams();
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
 
   const video = mockVideos.find((v) => v.id === id) || mockVideos[0];
-  const relatedVideos = mockVideos.filter((v) => v.id !== id).slice(0, 5);
 
   const formatCount = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -218,139 +214,105 @@ export default function TutorialDetail() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container py-4 md:py-6">
+      <main className="container max-w-5xl py-6 md:py-10">
         {/* Back Button */}
         <Link to="/tutorials">
-          <Button variant="ghost" size="sm" className="mb-4">
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Back to Tutorials
+          <Button variant="ghost" size="sm" className="mb-6 -ml-2 text-muted-foreground hover:text-foreground">
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            All Tutorials
           </Button>
         </Link>
 
-        {/* Main Content - Theater Mode Layout */}
-        <div className={cn("grid gap-6", showSidebar ? "xl:grid-cols-[1fr_380px]" : "")}>
-          {/* Video Player Section */}
-          <div className="space-y-6">
-            <VideoPlayer
-              video={video}
-              isFullscreen={isFullscreen}
-              onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
-            />
+        {/* Video Player */}
+        <div className="rounded-2xl overflow-hidden border border-border bg-card shadow-lg">
+          <VideoPlayer
+            video={video}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+          />
+        </div>
 
-            {/* Video Info */}
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={cn(
-                  "px-2 py-1 rounded-md text-xs font-bold uppercase",
-                  video.difficulty === "easy" && "bg-easy/20 text-easy",
-                  video.difficulty === "medium" && "bg-medium/20 text-medium",
-                  video.difficulty === "hard" && "bg-hard/20 text-hard"
-                )}>
-                  {video.difficulty}
-                </span>
-                <span className="px-2 py-1 rounded-md bg-secondary text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  <Tag className="h-3 w-3" />
-                  {video.category}
-                </span>
-              </div>
-
-              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">
-                {video.title}
-              </h1>
-
-              {/* Stats */}
-              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Eye className="h-4 w-4" />
-                  <span>{formatCount(video.views)} views</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <ThumbsUp className="h-4 w-4" />
-                  <span>{formatCount(video.likes)} likes</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{formatDate(video.publishedAt)}</span>
-                </div>
-              </div>
-
-              {/* Author */}
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-secondary/50 border border-border">
-                <img
-                  src={video.author.avatar}
-                  alt={video.author.name}
-                  className="h-12 w-12 rounded-full object-cover ring-2 ring-border"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">{video.author.name}</span>
-                    {video.author.verified && (
-                      <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center">
-                        <svg className="h-2.5 w-2.5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">{formatCount(video.author.subscribers)} subscribers</p>
-                </div>
-                <Button variant="default">Subscribe</Button>
-              </div>
-
-              {/* Description */}
-              <div className="p-4 rounded-xl bg-secondary/30 border border-border">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {video.description}
-                </p>
-              </div>
+        {/* Video Meta Section */}
+        <div className="mt-8 space-y-6">
+          {/* Title & Badges */}
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={cn(
+                "px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide",
+                video.difficulty === "easy" && "bg-easy/15 text-easy border border-easy/30",
+                video.difficulty === "medium" && "bg-medium/15 text-medium border border-medium/30",
+                video.difficulty === "hard" && "bg-hard/15 text-hard border border-hard/30"
+              )}>
+                {video.difficulty}
+              </span>
+              <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+                {video.category}
+              </span>
             </div>
 
-            {/* Comments Section */}
-            <div className="p-4 md:p-6 rounded-xl bg-card border border-border">
-              <CommentSection comments={mockComments} totalComments={video.comments} />
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-tight">
+              {video.title}
+            </h1>
+          </div>
+
+          {/* Stats Row */}
+          <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground py-4 border-y border-border">
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              <span>{formatCount(video.views)} views</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThumbsUp className="h-4 w-4" />
+              <span>{formatCount(video.likes)} likes</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span>{video.duration}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span>{formatDate(video.publishedAt)}</span>
             </div>
           </div>
 
-          {/* Related Videos Sidebar */}
-          <div className="hidden xl:block">
-            <div className="sticky top-20">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-foreground">Related Videos</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowSidebar(false)}
-                >
-                  Hide
-                </Button>
+          {/* Author Card */}
+          <div className="flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-secondary/80 to-secondary/40 border border-border">
+            <img
+              src={video.author.avatar}
+              alt={video.author.name}
+              className="h-14 w-14 rounded-full object-cover ring-2 ring-primary/20"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-foreground truncate">{video.author.name}</span>
+                {video.author.verified && (
+                  <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                    <svg className="h-3 w-3 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
+                    </svg>
+                  </div>
+                )}
               </div>
-
-              <ScrollArea className="h-[calc(100vh-200px)]">
-                <div className="space-y-4 pr-4">
-                  {relatedVideos.map((relatedVideo) => (
-                    <Link key={relatedVideo.id} to={`/tutorial/${relatedVideo.id}`}>
-                      <VideoCard
-                        {...relatedVideo}
-                        compact
-                      />
-                    </Link>
-                  ))}
-                </div>
-              </ScrollArea>
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Users className="h-3.5 w-3.5" />
+                {formatCount(video.author.subscribers)} subscribers
+              </p>
             </div>
+            <Button className="rounded-full px-6">Subscribe</Button>
+          </div>
+
+          {/* Description */}
+          <div className="p-5 rounded-2xl bg-muted/30 border border-border">
+            <h3 className="text-sm font-semibold text-foreground mb-2">About this tutorial</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {video.description}
+            </p>
           </div>
         </div>
 
-        {/* Mobile Related Videos */}
-        <div className="xl:hidden mt-8">
-          <h2 className="font-semibold text-foreground mb-4">Related Videos</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {relatedVideos.slice(0, 4).map((relatedVideo) => (
-              <Link key={relatedVideo.id} to={`/tutorial/${relatedVideo.id}`}>
-                <VideoCard {...relatedVideo} compact />
-              </Link>
-            ))}
-          </div>
+        {/* Comments Section */}
+        <div className="mt-10 p-6 rounded-2xl bg-card border border-border">
+          <CommentSection comments={mockComments} totalComments={video.comments} />
         </div>
       </main>
     </div>
