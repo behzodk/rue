@@ -2,17 +2,19 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import ProblemPage from "./pages/ProblemPage";
 import Leaderboard from "./pages/Leaderboard";
 import ProblemLeaderboard from "./pages/ProblemLeaderboard";
 import SubmissionDetail from "./pages/SubmissionDetail";
 import Profile from "./pages/Profile";
+import ProfileCreate from "./pages/ProfileCreate";
 import Tutorials from "./pages/Tutorials";
 import TutorialDetail from "./pages/TutorialDetail";
 import Subscriptions from "./pages/Subscriptions";
@@ -21,8 +23,12 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   
+  if (isLoading) {
+    return null;
+  }
+
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
@@ -30,25 +36,54 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function ProfileRequiredRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, profile, isProfileLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading || isProfileLoading) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (!profile && location.pathname !== "/profile/create") {
+    return <Navigate to="/profile/create" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading, profile, isProfileLoading } = useAuth();
   
+  if (isLoading || isProfileLoading) {
+    return null;
+  }
+
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={profile ? "/dashboard" : "/profile/create"} replace />;
   }
   
   return <>{children}</>;
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, profile, isProfileLoading } = useAuth();
 
   return (
     <Routes>
       {/* Public routes */}
       <Route 
         path="/" 
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} 
+        element={
+          isAuthenticated
+            ? isProfileLoading
+              ? null
+              : <Navigate to={profile ? "/dashboard" : "/profile/create"} replace />
+            : <Landing />
+        } 
       />
       <Route 
         path="/auth" 
@@ -58,70 +93,79 @@ function AppRoutes() {
           </PublicRoute>
         } 
       />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       
       {/* Protected routes */}
       <Route 
         path="/dashboard" 
         element={
-          <ProtectedRoute>
+          <ProfileRequiredRoute>
             <Dashboard />
-          </ProtectedRoute>
+          </ProfileRequiredRoute>
         } 
       />
       <Route 
         path="/problem/:id" 
         element={
-          <ProtectedRoute>
+          <ProfileRequiredRoute>
             <ProblemPage />
-          </ProtectedRoute>
+          </ProfileRequiredRoute>
         } 
       />
       <Route 
         path="/problem/:id/leaderboard" 
         element={
-          <ProtectedRoute>
+          <ProfileRequiredRoute>
             <ProblemLeaderboard />
-          </ProtectedRoute>
+          </ProfileRequiredRoute>
         } 
       />
       <Route 
         path="/problem/:id/submission/:submissionId" 
         element={
-          <ProtectedRoute>
+          <ProfileRequiredRoute>
             <SubmissionDetail />
-          </ProtectedRoute>
+          </ProfileRequiredRoute>
         } 
       />
       <Route 
         path="/leaderboard" 
         element={
-          <ProtectedRoute>
+          <ProfileRequiredRoute>
             <Leaderboard />
-          </ProtectedRoute>
+          </ProfileRequiredRoute>
         } 
       />
       <Route path="/tutorials" element={<Tutorials />} />
       <Route 
         path="/tutorial/:id" 
         element={
-          <ProtectedRoute>
+          <ProfileRequiredRoute>
             <TutorialDetail />
-          </ProtectedRoute>
+          </ProfileRequiredRoute>
         } 
       />
       <Route 
         path="/subscriptions" 
         element={
-          <ProtectedRoute>
+          <ProfileRequiredRoute>
             <Subscriptions />
-          </ProtectedRoute>
+          </ProfileRequiredRoute>
         } 
       />
       <Route 
         path="/profile" 
         element={
-          <ProtectedRoute>
+          <ProfileRequiredRoute>
             <Profile />
+          </ProfileRequiredRoute>
+        } 
+      />
+      <Route 
+        path="/profile/create" 
+        element={
+          <ProtectedRoute>
+            <ProfileCreate />
           </ProtectedRoute>
         } 
       />

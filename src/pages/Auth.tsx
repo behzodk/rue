@@ -1,33 +1,28 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { 
   Code2, 
-  Mail, 
-  Lock, 
-  ArrowRight,
-  Github,
-  Chrome
+  Github
 } from "lucide-react";
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const currentYear = new Date().getFullYear();
+  const { signInWithGithub } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    login();
-    navigate("/");
-  };
-
-  const handleProviderLogin = () => {
-    login();
-    navigate("/");
+  const handleGithubLogin = async () => {
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await signInWithGithub();
+    } catch (authError) {
+      setIsSubmitting(false);
+      setError(authError instanceof Error ? authError.message : "GitHub sign-in failed.");
+    }
   };
 
   return (
@@ -88,7 +83,7 @@ export default function Auth() {
           </div>
 
           <div className="text-sm text-muted-foreground">
-            © 2024 PacalTower. All rights reserved.
+            © {currentYear} PacalTower. All rights reserved.
           </div>
         </div>
       </div>
@@ -116,125 +111,32 @@ export default function Auth() {
             {/* Header */}
             <div className="text-center">
               <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                {isLogin ? "Welcome back" : "Create an account"}
+                Sign in with GitHub
               </h2>
               <p className="text-muted-foreground">
-                {isLogin 
-                  ? "Enter your credentials to access your account" 
-                  : "Start your coding journey today"
-                }
+                GitHub authentication is the only enabled sign-in method right now.
               </p>
             </div>
 
-            {/* Social providers */}
+            {/* GitHub sign-in */}
             <div className="space-y-3">
               <button
-                onClick={handleProviderLogin}
+                onClick={handleGithubLogin}
+                disabled={isSubmitting}
                 className={cn(
                   "w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl",
                   "bg-secondary border border-border",
-                  "hover:bg-accent transition-colors font-medium"
-                )}
-              >
-                <Chrome className="h-5 w-5" />
-                Continue with Google
-              </button>
-              <button
-                onClick={handleProviderLogin}
-                className={cn(
-                  "w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl",
-                  "bg-secondary border border-border",
-                  "hover:bg-accent transition-colors font-medium"
+                  "hover:bg-accent transition-colors font-medium",
+                  isSubmitting && "opacity-70 cursor-not-allowed"
                 )}
               >
                 <Github className="h-5 w-5" />
-                Continue with GitHub
+                {isSubmitting ? "Redirecting to GitHub..." : "Continue with GitHub"}
               </button>
             </div>
-
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-3 text-muted-foreground">or continue with email</span>
-              </div>
-            </div>
-
-            {/* Email form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className={cn(
-                      "w-full pl-10 pr-4 py-3 rounded-xl text-sm",
-                      "bg-secondary border border-border",
-                      "placeholder:text-muted-foreground",
-                      "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
-                      "transition-all"
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Password</label>
-                  {isLogin && (
-                    <button type="button" className="text-xs text-primary hover:underline">
-                      Forgot password?
-                    </button>
-                  )}
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className={cn(
-                      "w-full pl-10 pr-4 py-3 rounded-xl text-sm",
-                      "bg-secondary border border-border",
-                      "placeholder:text-muted-foreground",
-                      "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
-                      "transition-all"
-                    )}
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className={cn(
-                  "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl",
-                  "bg-primary text-primary-foreground font-semibold",
-                  "hover:bg-primary/90 transition-all",
-                  "glow-primary"
-                )}
-              >
-                {isLogin ? "Sign In" : "Create Account"}
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </form>
-
-            {/* Toggle */}
-            <p className="text-center text-sm text-muted-foreground">
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-primary hover:underline font-medium"
-              >
-                {isLogin ? "Sign up" : "Sign in"}
-              </button>
-            </p>
+            {error && (
+              <p className="text-sm text-destructive text-center">{error}</p>
+            )}
           </div>
         </div>
       </div>

@@ -109,6 +109,7 @@ function FloatingElement({ children, className, delay = 0 }: { children: React.R
 export default function Landing() {
   const [typedText, setTypedText] = useState("");
   const fullText = "Master algorithms. Ace interviews.";
+  const currentYear = new Date().getFullYear();
   
   useEffect(() => {
     let index = 0;
@@ -520,7 +521,7 @@ export default function Landing() {
               <span className="text-xl font-bold text-gradient">PacalTower</span>
             </div>
             <div className="text-sm text-muted-foreground">
-              © 2024 PacalTower. Built for developers, by developers.
+              © {currentYear} PacalTower. Built for developers, by developers.
             </div>
           </div>
         </div>

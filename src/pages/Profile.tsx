@@ -1,17 +1,15 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { StatsCard } from "@/components/StatsCard";
 import { DifficultyBadge } from "@/components/DifficultyBadge";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabaseClient";
 import { cn } from "@/lib/utils";
 import {
   User,
-  Mail,
   MapPin,
-  Link as LinkIcon,
-  Github,
-  Linkedin,
-  Twitter,
+  Mail,
   Edit3,
   Save,
   X,
@@ -42,20 +40,6 @@ const generateActivityData = () => {
 };
 
 const activityData = generateActivityData();
-
-const profileData = {
-  name: "Alex Johnson",
-  username: "alexcoder",
-  email: "alex@example.com",
-  location: "San Francisco, CA",
-  website: "https://alexcodes.dev",
-  github: "alexcoder",
-  linkedin: "alexjohnson",
-  twitter: "alexcodes",
-  bio: "Full-stack developer passionate about algorithms and competitive programming. Currently solving problems daily to improve my skills.",
-  joinedDate: "January 2023",
-  avatar: null,
-};
 
 const statsData = {
   rank: 12458,
@@ -100,18 +84,135 @@ const skillTags = [
 ];
 
 export default function Profile() {
+  const { user, profile, isProfileLoading, refreshProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState(profileData);
+  const [editData, setEditData] = useState({
+    firstName: "",
+    lastName: "",
+    username: "",
+    bio: "",
+    location: "",
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
-    // In a real app, this would save to a backend
+  useEffect(() => {
+    if (!profile) return;
+    setEditData({
+      firstName: profile.first_name,
+      lastName: profile.last_name,
+      username: profile.username,
+      bio: profile.bio ?? "",
+      location: profile.location ?? "",
+    });
+  }, [profile]);
+
+  const displayName = useMemo(() => {
+    if (!profile) return "Profile";
+    return `${profile.first_name} ${profile.last_name}`.trim();
+  }, [profile]);
+
+  const joinedDate = useMemo(() => {
+    if (!user?.created_at) return null;
+    return new Date(user.created_at).toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
+  }, [user?.created_at]);
+
+  const validateUsername = (value: string) => {
+    if (value.length < 4) {
+      return "Username must be at least 4 characters.";
+    }
+    if (!/^[a-z]/.test(value)) {
+      return "Username must start with a letter.";
+    }
+    if (!/^[a-z0-9_-]+$/.test(value)) {
+      return "Only letters, numbers, underscore, and hyphen are allowed.";
+    }
+    if (value.length > 24) {
+      return "Username must be 24 characters or fewer.";
+    }
+    return null;
+  };
+
+  const handleSave = async () => {
+    setError(null);
+    if (!user || !profile) {
+      setError("Profile is unavailable. Please refresh and try again.");
+      return;
+    }
+
+    const trimmedFirstName = editData.firstName.trim();
+    const trimmedLastName = editData.lastName.trim();
+    const normalizedUsername = editData.username.trim().toLowerCase();
+
+    if (!trimmedFirstName || !trimmedLastName || !normalizedUsername) {
+      setError("First name, last name, and username are required.");
+      return;
+    }
+
+    const validationError = validateUsername(normalizedUsername);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setIsSaving(true);
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        first_name: trimmedFirstName,
+        last_name: trimmedLastName,
+        username: normalizedUsername,
+        bio: editData.bio.trim() || null,
+        location: editData.location.trim() || null,
+      })
+      .eq("user_id", user.id);
+    if (updateError) {
+      setIsSaving(false);
+      setError(updateError.message);
+      return;
+    }
+
+    await refreshProfile();
+    setIsSaving(false);
     setIsEditing(false);
   };
 
   const handleCancel = () => {
-    setEditData(profileData);
+    if (profile) {
+      setEditData({
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        username: profile.username,
+        bio: profile.bio ?? "",
+        location: profile.location ?? "",
+      });
+    }
+    setError(null);
     setIsEditing(false);
   };
+
+  if (isProfileLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-12 text-muted-foreground">Loading profile...</main>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-12 text-muted-foreground">
+          Profile not found. Please refresh or create one.
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -141,11 +242,20 @@ export default function Profile() {
               {isEditing ? (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm text-muted-foreground">Name</label>
+                    <label className="text-sm text-muted-foreground">First name</label>
                     <input
                       type="text"
-                      value={editData.name}
-                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                      value={editData.firstName}
+                      onChange={(e) => setEditData({ ...editData, firstName: e.target.value })}
+                      className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Last name</label>
+                    <input
+                      type="text"
+                      value={editData.lastName}
+                      onChange={(e) => setEditData({ ...editData, lastName: e.target.value })}
                       className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -154,7 +264,7 @@ export default function Profile() {
                     <input
                       type="text"
                       value={editData.username}
-                      onChange={(e) => setEditData({ ...editData, username: e.target.value })}
+                      onChange={(e) => setEditData({ ...editData, username: e.target.value.toLowerCase() })}
                       className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -176,71 +286,45 @@ export default function Profile() {
                       className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
-                  <div>
-                    <label className="text-sm text-muted-foreground">Website</label>
-                    <input
-                      type="url"
-                      value={editData.website}
-                      onChange={(e) => setEditData({ ...editData, website: e.target.value })}
-                      className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
+                  {error && <p className="text-sm text-destructive">{error}</p>}
                   <button
                     onClick={handleSave}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                    disabled={isSaving}
+                    className={cn(
+                      "w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg",
+                      "bg-primary text-primary-foreground hover:bg-primary/90 transition-colors",
+                      isSaving && "cursor-not-allowed opacity-70 hover:bg-primary",
+                    )}
                   >
                     <Save className="h-4 w-4" />
-                    Save Changes
+                    {isSaving ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
               ) : (
                 <>
-                  <h1 className="text-2xl font-bold">{profileData.name}</h1>
-                  <p className="text-muted-foreground">@{profileData.username}</p>
-                  <p className="mt-4 text-sm leading-relaxed">{profileData.bio}</p>
+                  <h1 className="text-2xl font-bold">{displayName}</h1>
+                  <p className="text-muted-foreground">@{profile.username}</p>
+                  <p className="mt-4 text-sm leading-relaxed">
+                    {profile.bio || "No bio yet. Add one to tell the community about your focus."}
+                  </p>
 
                   <div className="mt-6 space-y-3">
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
                       <MapPin className="h-4 w-4" />
-                      <span>{profileData.location}</span>
+                      <span>{profile.location || "Location not set"}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <LinkIcon className="h-4 w-4" />
-                      <a href={profileData.website} className="text-primary hover:underline">
-                        {profileData.website.replace('https://', '')}
-                      </a>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>Joined {profileData.joinedDate}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 mt-6">
-                    <a
-                      href={`https://github.com/${profileData.github}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-2 rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <Github className="h-5 w-5" />
-                    </a>
-                    <a
-                      href={`https://linkedin.com/in/${profileData.linkedin}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-2 rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <Linkedin className="h-5 w-5" />
-                    </a>
-                    <a
-                      href={`https://twitter.com/${profileData.twitter}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-2 rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <Twitter className="h-5 w-5" />
-                    </a>
+                    {user?.email && (
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Mail className="h-4 w-4" />
+                        <span>{user.email}</span>
+                      </div>
+                    )}
+                    {joinedDate && (
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>Joined {joinedDate}</span>
+                      </div>
+                    )}
                   </div>
                 </>
               )}

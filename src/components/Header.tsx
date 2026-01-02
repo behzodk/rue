@@ -18,10 +18,14 @@ export function Header() {
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   ];
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-    setIsMobileMenuOpen(false);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+      setIsMobileMenuOpen(false);
+    } catch (error) {
+      console.error("Failed to log out:", error);
+    }
   };
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
