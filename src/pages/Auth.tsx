@@ -10,7 +10,7 @@ import {
 
 export default function Auth() {
   const currentYear = new Date().getFullYear();
-  const { signInWithGithub } = useAuth();
+  const { signInWithGithub, signInWithGoogle } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,6 +22,17 @@ export default function Auth() {
     } catch (authError) {
       setIsSubmitting(false);
       setError(authError instanceof Error ? authError.message : "GitHub sign-in failed.");
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await signInWithGoogle();
+    } catch (authError) {
+      setIsSubmitting(false);
+      setError(authError instanceof Error ? authError.message : "Google sign-in failed.");
     }
   };
 
@@ -111,10 +122,10 @@ export default function Auth() {
             {/* Header */}
             <div className="text-center">
               <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                Sign in with GitHub
+                Sign in to PacalTower
               </h2>
               <p className="text-muted-foreground">
-                GitHub authentication is the only enabled sign-in method right now.
+                Continue with your preferred provider.
               </p>
             </div>
 
@@ -132,6 +143,36 @@ export default function Auth() {
               >
                 <Github className="h-5 w-5" />
                 {isSubmitting ? "Redirecting to GitHub..." : "Continue with GitHub"}
+              </button>
+              <button
+                onClick={handleGoogleLogin}
+                disabled={isSubmitting}
+                className={cn(
+                  "w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl",
+                  "bg-secondary border border-border",
+                  "hover:bg-accent transition-colors font-medium",
+                  isSubmitting && "opacity-70 cursor-not-allowed"
+                )}
+              >
+                <svg viewBox="0 0 533.5 544.3" className="h-5 w-5">
+                  <path
+                    fill="#4285f4"
+                    d="M533.5 278.4c0-17.4-1.6-34.2-4.7-50.5H272v95.6h147.1c-6.3 33.6-25 62.1-53.5 81.1v67.5h86.5c50.6-46.6 81.4-115.2 81.4-193.7z"
+                  />
+                  <path
+                    fill="#34a853"
+                    d="M272 544.3c72.6 0 133.5-24 178-65.1l-86.5-67.5c-24.1 16.2-55 25.8-91.5 25.8-70.3 0-129.8-47.4-151.1-111.1H33.4v69.9c44.3 88.1 135.8 148.9 238.6 148.9z"
+                  />
+                  <path
+                    fill="#fbbc04"
+                    d="M120.9 326.4c-10.5-31.6-10.5-65.8 0-97.4V159.1H33.4c-36.4 72.8-36.4 159.5 0 232.3l87.5-69.9z"
+                  />
+                  <path
+                    fill="#ea4335"
+                    d="M272 107.7c39.5-.6 77.5 13.9 106.3 40.7l79.1-79.1C413.3 24.7 343.4-1.5 272 0 169.2 0 77.7 60.8 33.4 148.9l87.5 69.9C142.2 155.1 201.7 107.7 272 107.7z"
+                  />
+                </svg>
+                {isSubmitting ? "Redirecting to Google..." : "Continue with Google"}
               </button>
             </div>
             {error && (

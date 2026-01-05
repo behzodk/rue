@@ -108,9 +108,16 @@ export default function ProfileCreate() {
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
     const normalizedUsername = username.trim().toLowerCase();
+    const normalizedEmail = user.email?.trim().toLowerCase() ?? "";
+    const provider = user.app_metadata?.provider || user.identities?.[0]?.provider || "unknown";
 
     if (!trimmedFirstName || !trimmedLastName || !normalizedUsername) {
       setError("First name, last name, and username are required.");
+      return;
+    }
+
+    if (!normalizedEmail) {
+      setError("Email is missing from your account. Please try again.");
       return;
     }
 
@@ -122,6 +129,20 @@ export default function ProfileCreate() {
 
     if (usernameStatus === "taken") {
       setError("That username is already taken.");
+      return;
+    }
+
+    const { data: hasConflict, error: conflictError } = await supabase.rpc("has_provider_conflict", {
+      p_email: normalizedEmail,
+      p_provider: provider,
+      p_user_id: user.id,
+    });
+    if (conflictError) {
+      setError(conflictError.message);
+      return;
+    }
+    if (hasConflict) {
+      setError("This email is already linked to a different sign-in provider.");
       return;
     }
 
