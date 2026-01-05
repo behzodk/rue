@@ -12,15 +12,18 @@ export default function Auth() {
   const currentYear = new Date().getFullYear();
   const { signInWithGithub, signInWithGoogle } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeProvider, setActiveProvider] = useState<"github" | "google" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleGithubLogin = async () => {
     setError(null);
     setIsSubmitting(true);
+    setActiveProvider("github");
     try {
       await signInWithGithub();
     } catch (authError) {
       setIsSubmitting(false);
+      setActiveProvider(null);
       setError(authError instanceof Error ? authError.message : "GitHub sign-in failed.");
     }
   };
@@ -28,10 +31,12 @@ export default function Auth() {
   const handleGoogleLogin = async () => {
     setError(null);
     setIsSubmitting(true);
+    setActiveProvider("google");
     try {
       await signInWithGoogle();
     } catch (authError) {
       setIsSubmitting(false);
+      setActiveProvider(null);
       setError(authError instanceof Error ? authError.message : "Google sign-in failed.");
     }
   };
@@ -142,7 +147,9 @@ export default function Auth() {
                 )}
               >
                 <Github className="h-5 w-5" />
-                {isSubmitting ? "Redirecting to GitHub..." : "Continue with GitHub"}
+                {isSubmitting && activeProvider === "github"
+                  ? "Redirecting to GitHub..."
+                  : "Continue with GitHub"}
               </button>
               <button
                 onClick={handleGoogleLogin}
@@ -172,7 +179,9 @@ export default function Auth() {
                     d="M272 107.7c39.5-.6 77.5 13.9 106.3 40.7l79.1-79.1C413.3 24.7 343.4-1.5 272 0 169.2 0 77.7 60.8 33.4 148.9l87.5 69.9C142.2 155.1 201.7 107.7 272 107.7z"
                   />
                 </svg>
-                {isSubmitting ? "Redirecting to Google..." : "Continue with Google"}
+                {isSubmitting && activeProvider === "google"
+                  ? "Redirecting to Google..."
+                  : "Continue with Google"}
               </button>
             </div>
             {error && (
