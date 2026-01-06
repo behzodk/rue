@@ -16,6 +16,7 @@ import ProblemLeaderboard from "./pages/ProblemLeaderboard";
 import SubmissionDetail from "./pages/SubmissionDetail";
 import Profile from "./pages/Profile";
 import ProfileCreate from "./pages/ProfileCreate";
+import Privacy from "./pages/Privacy";
 import Tutorials from "./pages/Tutorials";
 import TutorialDetail from "./pages/TutorialDetail";
 import Subscriptions from "./pages/Subscriptions";
@@ -119,6 +120,7 @@ function AppRoutes() {
         } 
       />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/privacy" element={<Privacy />} />
       
       {/* Protected routes */}
       <Route 
