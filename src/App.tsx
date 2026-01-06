@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import ProblemPage from "./pages/ProblemPage";
+import ProblemCreate from "./pages/ProblemCreate";
 import Leaderboard from "./pages/Leaderboard";
 import ProblemLeaderboard from "./pages/ProblemLeaderboard";
 import SubmissionDetail from "./pages/SubmissionDetail";
@@ -20,13 +21,21 @@ import TutorialDetail from "./pages/TutorialDetail";
 import Subscriptions from "./pages/Subscriptions";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 60_000, // 1 minute
+    },
+  },
+});
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   
   if (isLoading) {
-    return null;
+    return <FullscreenLoader />;
   }
 
   if (!isAuthenticated) {
@@ -36,36 +45,52 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function ProfileRequiredRoute({ children }: { children: React.ReactNode }) {
+function FullscreenLoader() {
+  return (
+    <div className="min-h-screen grid place-items-center">
+      <div className="text-sm text-muted-foreground">Loading…</div>
+    </div>
+  );
+}
+
+function ProfileRequiredRoute({ children }) {
   const { isAuthenticated, isLoading, profile, isProfileLoading } = useAuth();
   const location = useLocation();
 
-  if (isLoading || isProfileLoading) {
-    return null;
+  // Only block on initial auth bootstrap
+  if (isLoading) return <FullscreenLoader />;
+
+  if (!isAuthenticated) return <Navigate to="/" replace />;
+
+  // If profile is missing, wait for it / redirect
+  if (!profile) {
+    if (isProfileLoading) return <FullscreenLoader />;
+    if (location.pathname !== "/profile/create") {
+      return <Navigate to="/profile/create" replace />;
+    }
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (!profile && location.pathname !== "/profile/create") {
-    return <Navigate to="/profile/create" replace />;
-  }
-
-  return <>{children}</>;
+  // IMPORTANT: keep children mounted even if isProfileLoading is true
+  return (
+    <>
+      {children}
+      {/* optional: show a tiny non-blocking “Syncing…” badge instead of unmounting */}
+      {/* {isProfileLoading && <div className="fixed bottom-4 right-4 text-xs">Syncing…</div>} */}
+    </>
+  );
 }
 
-function PublicRoute({ children }: { children: React.ReactNode }) {
+function PublicRoute({ children }) {
   const { isAuthenticated, isLoading, profile, isProfileLoading } = useAuth();
-  
-  if (isLoading || isProfileLoading) {
-    return null;
-  }
 
+  if (isLoading) return <FullscreenLoader />;
+
+  // If already authed, redirect (don’t block UI on profile loading)
   if (isAuthenticated) {
+    if (!profile && isProfileLoading) return <FullscreenLoader />;
     return <Navigate to={profile ? "/dashboard" : "/profile/create"} replace />;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -109,6 +134,14 @@ function AppRoutes() {
         element={
           <ProfileRequiredRoute>
             <ProblemPage />
+          </ProfileRequiredRoute>
+        } 
+      />
+      <Route 
+        path="/problem/create" 
+        element={
+          <ProfileRequiredRoute>
+            <ProblemCreate />
           </ProfileRequiredRoute>
         } 
       />

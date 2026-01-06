@@ -9,6 +9,7 @@ interface Profile {
   username: string;
   bio: string | null;
   location: string | null;
+  contest_rating: number | null;
 }
 
 interface AuthContextType {
@@ -46,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsProfileLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("user_id, first_name, last_name, username, bio, location")
+      .select("user_id, first_name, last_name, username, bio, location, contest_rating")
       .eq("user_id", activeSession.user.id)
       .maybeSingle();
     if (!isMountedRef.current) return;

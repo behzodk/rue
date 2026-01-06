@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AtSign, MapPin, PenLine, Sparkles, User } from "lucide-react";
+import { AtSign, CheckCircle2, MapPin, PenLine, Sparkles, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,16 +17,26 @@ export default function ProfileCreate() {
   const [location, setLocation] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">(
     "idle",
   );
   const [usernameMessage, setUsernameMessage] = useState<string | null>(null);
+  const successTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (profile) {
       navigate("/dashboard", { replace: true });
     }
   }, [profile, navigate]);
+
+  useEffect(() => {
+    return () => {
+      if (successTimeoutRef.current) {
+        window.clearTimeout(successTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const previewName = useMemo(() => {
     const combined = [firstName, lastName].filter(Boolean).join(" ").trim();
@@ -163,7 +173,10 @@ export default function ProfileCreate() {
     }
 
     await refreshProfile();
-    navigate("/dashboard", { replace: true });
+    setShowSuccess(true);
+    successTimeoutRef.current = window.setTimeout(() => {
+      navigate("/dashboard", { replace: true });
+    }, 1400);
   };
 
   return (
@@ -310,21 +323,49 @@ export default function ProfileCreate() {
                   isSubmitting ||
                   usernameStatus === "checking" ||
                   usernameStatus === "invalid" ||
-                  usernameStatus === "taken"
+                  usernameStatus === "taken" ||
+                  showSuccess
                 }
                 className={cn(
                   "w-full rounded-xl px-4 py-3 text-sm font-semibold text-primary-foreground",
                   "bg-gradient-to-r from-primary to-sky-500 shadow-lg shadow-primary/20",
                   "transition-transform hover:-translate-y-0.5 hover:shadow-primary/30",
-                  isSubmitting && "cursor-not-allowed opacity-70 hover:translate-y-0",
+                  (isSubmitting || showSuccess) && "cursor-not-allowed opacity-70 hover:translate-y-0",
                 )}
               >
-                {isSubmitting ? "Calibrating profile..." : "Launch profile"}
+                {showSuccess ? "Launching..." : isSubmitting ? "Calibrating profile..." : "Launch profile"}
               </button>
             </form>
           </section>
         </div>
       </main>
+
+      {showSuccess && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-3xl border border-border bg-card p-8 text-center shadow-2xl animate-fade-in">
+            <div className="absolute -top-10 left-1/2 h-20 w-20 -translate-x-1/2 rounded-full bg-primary/20 blur-2xl" />
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/10 via-transparent to-sky-500/10" />
+            <div className="relative space-y-4 animate-slide-up">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
+                <CheckCircle2 className="h-7 w-7" />
+              </div>
+              <h3 className="text-2xl font-bold">Profile launched</h3>
+              <p className="text-sm text-muted-foreground">
+                You are cleared for dashboard access. Redirecting now.
+              </p>
+              <div className="flex justify-center gap-2 pt-2">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <span
+                    key={`pulse-${index}`}
+                    className="h-2 w-2 rounded-full bg-primary/60 animate-pulse-slow"
+                    style={{ animationDelay: `${index * 120}ms` }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

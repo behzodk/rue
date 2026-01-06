@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Code2, LayoutDashboard, Trophy, User, Zap, LogOut, Menu, X, PlayCircle, LogIn } from "lucide-react";
+import { Code2, LayoutDashboard, Trophy, User, Zap, LogOut, Menu, X, PlayCircle, LogIn, Plus } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,18 @@ export function Header() {
 
           {/* Desktop Right side */}
           <div className="hidden md:flex items-center gap-3">
+            {isAuthenticated && (
+              <Link to="/problem/create">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="gap-2 border border-primary/30 bg-gradient-to-r from-primary/15 to-sky-500/15 text-foreground hover:border-primary/50 hover:from-primary/25 hover:to-sky-500/25"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create a problem
+                </Button>
+              </Link>
+            )}
             <ThemeToggle />
             
             {isAuthenticated ? (
@@ -101,6 +113,17 @@ export function Header() {
 
           {/* Mobile: Theme toggle + Hamburger */}
           <div className="flex md:hidden items-center gap-2">
+            {isAuthenticated && (
+              <Link to="/problem/create">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="border border-primary/30 bg-gradient-to-r from-primary/15 to-sky-500/15 text-foreground hover:border-primary/50 hover:from-primary/25 hover:to-sky-500/25"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </Link>
+            )}
             <ThemeToggle />
             <button
               onClick={() => setIsMobileMenuOpen(true)}

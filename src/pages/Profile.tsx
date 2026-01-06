@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { StatsCard } from "@/components/StatsCard";
@@ -52,7 +53,6 @@ const statsData = {
   hardTotal: 580,
   streak: 23,
   maxStreak: 45,
-  contestRating: 1847,
   contestsAttended: 15,
   contributions: 42,
   reputation: 1250,
@@ -119,6 +119,17 @@ export default function Profile() {
       year: "numeric",
     });
   }, [user?.created_at]);
+
+  const contestRatingValue = profile.contest_rating ? (
+    profile.contest_rating.toString()
+  ) : (
+    <Link
+      to="/dashboard"
+      className="text-base md:text-lg font-semibold text-gradient hover:opacity-80 transition-opacity"
+    >
+      Let's start!
+    </Link>
+  );
 
   const validateUsername = (value: string) => {
     if (value.length < 4) {
@@ -386,7 +397,8 @@ export default function Profile() {
               />
               <StatsCard
                 title="Contest Rating"
-                value={statsData.contestRating.toString()}
+                value={contestRatingValue}
+                subtitle={profile.contest_rating ? undefined : ""}
                 icon={TrendingUp}
                 trend={{ value: 25, isPositive: true }}
               />
