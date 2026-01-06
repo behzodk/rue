@@ -96,7 +96,7 @@ const sections = [
 ];
 
 export default function Privacy() {
-  const updatedDate = "March 10, 2025";
+  const updatedDate = "January 6, 2026";
 
   return (
     <div className="min-h-screen bg-background">

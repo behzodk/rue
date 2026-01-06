@@ -520,8 +520,11 @@ export default function Landing() {
               </div>
               <span className="text-xl font-bold text-gradient">PacalTower</span>
             </div>
-            <div className="text-sm text-muted-foreground">
-              © {currentYear} PacalTower. Built for developers, by developers.
+            <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground md:flex-row md:gap-4">
+              <Link to="/privacy" className="hover:text-foreground hover:underline">
+                Privacy Policy
+              </Link>
+              <span>© {currentYear} PacalTower. Built for developers, by developers.</span>
             </div>
           </div>
         </div>
