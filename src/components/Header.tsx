@@ -38,11 +38,11 @@ export function Header() {
           <Link to="/" className="flex items-center gap-2 group">
             <div className="relative">
               <div className="absolute inset-0 bg-primary/20 blur-xl group-hover:bg-primary/30 transition-colors" />
-              <div className="relative p-2 rounded-lg bg-gradient-to-br from-primary to-primary/80">
                 <Code2 className="h-5 w-5 text-primary-foreground" />
+              <div className="relative p-2 rounded-lg bg-gradient-to-br from-primary to-primary/80">
               </div>
             </div>
-            <span className="text-xl font-bold text-gradient">PacalTower</span>
+            <span className="text-xl font-bold text-gradient">PascalTower</span>
           </Link>
 
           {/* Desktop Navigation */}

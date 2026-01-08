@@ -49,7 +49,7 @@ const stats = [
 
 const testimonials = [
   {
-    quote: "PacalTower helped me land my dream job at a FAANG company. The AI hints are a game-changer!",
+    quote: "PascalTower helped me land my dream job at a FAANG company. The AI hints are a game-changer!",
     author: "Sarah Chen",
     role: "Software Engineer @ Google",
     rating: 5
@@ -174,7 +174,7 @@ export default function Landing() {
                 <Code2 className="h-5 w-5 text-primary-foreground" />
               </div>
             </div>
-            <span className="text-xl font-bold text-gradient">PacalTower</span>
+            <span className="text-xl font-bold text-gradient">PascalTower</span>
           </Link>
 
           <div className="flex items-center gap-3">
@@ -289,7 +289,7 @@ export default function Landing() {
                 </div>
                 <div className="flex-1 flex justify-center">
                   <div className="px-4 py-1.5 rounded-lg bg-background/60 text-xs text-muted-foreground border border-border/30">
-                    🔒 pacaltower.com/problem/two-sum
+                    🔒 pascaltower.com/problem/two-sum
                   </div>
                 </div>
               </div>
@@ -490,7 +490,7 @@ export default function Landing() {
               Ready to <span className="text-gradient">level up</span>?
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto mb-10 text-lg">
-              Join PacalTower for free and start solving problems that will prepare you for any technical interview.
+              Join PascalTower for free and start solving problems that will prepare you for any technical interview.
             </p>
 
             <Link
@@ -518,13 +518,13 @@ export default function Landing() {
               <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
                 <Code2 className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-gradient">PacalTower</span>
+              <span className="text-xl font-bold text-gradient">PascalTower</span>
             </div>
             <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground md:flex-row md:gap-4">
               <Link to="https://www.pascaltower.com/privacy" className="hover:text-foreground hover:underline">
                 Privacy Policy
               </Link>
-              <span>© {currentYear} PacalTower. Built for developers, by developers.</span>
+              <span>© {currentYear} PascalTower. Built for developers, by developers.</span>
             </div>
           </div>
         </div>

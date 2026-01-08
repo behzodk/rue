@@ -69,7 +69,7 @@ export default function Auth() {
                 <Code2 className="h-5 w-5 text-primary-foreground" />
               </div>
             </div>
-            <span className="text-xl font-bold text-gradient">PacalTower</span>
+            <span className="text-xl font-bold text-gradient">PascalTower</span>
           </Link>
 
           <div className="space-y-6">
@@ -99,7 +99,7 @@ export default function Auth() {
           </div>
 
           <div className="text-sm text-muted-foreground">
-            © {currentYear} PacalTower. All rights reserved.
+            © {currentYear} PascalTower. All rights reserved.
           </div>
         </div>
       </div>
@@ -112,7 +112,7 @@ export default function Auth() {
             <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary to-primary/80">
               <Code2 className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-bold text-gradient">PacalTower</span>
+            <span className="font-bold text-gradient">PascalTower</span>
           </Link>
           <ThemeToggle />
         </div>
@@ -127,7 +127,7 @@ export default function Auth() {
             {/* Header */}
             <div className="text-center">
               <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                Sign in to PacalTower
+                Sign in to PascalTower
               </h2>
               <p className="text-muted-foreground">
                 Continue with your preferred provider.

@@ -25,7 +25,7 @@ const sections = [
     title: "How We Use Information",
     icon: Shield,
     content: [
-      "Provide and improve PacalTower services, personalized content, and analytics.",
+      "Provide and improve PascalTower services, personalized content, and analytics.",
       "Secure the platform, detect abuse, and troubleshoot issues.",
       "Communicate product updates, security notices, and support responses.",
     ],
@@ -91,7 +91,7 @@ const sections = [
   {
     title: "Contact",
     icon: Mail,
-    content: ["Questions? Email us at privacy@pacaltower.com."],
+    content: ["Questions? Email us at contact@pascaltower.com."],
   },
 ];
 
@@ -109,7 +109,7 @@ export default function Privacy() {
               <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Privacy Policy</p>
               <h1 className="mt-3 text-4xl font-bold">Your data, engineered with care</h1>
               <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-                This policy explains how PacalTower collects, uses, and protects your information. It is designed to
+                This policy explains how PascalTower collects, uses, and protects your information. It is designed to
                 be transparent and practical for builders using the platform.
               </p>
             </div>
