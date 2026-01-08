@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Code2, LayoutDashboard, Trophy, User, Zap, LogOut, Menu, X, PlayCircle, LogIn, Plus } from "lucide-react";
+import { LayoutDashboard, Trophy, User, Zap, LogOut, Menu, X, PlayCircle, LogIn, Plus } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -35,14 +35,15 @@ export function Header() {
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-3 group">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 blur-xl group-hover:bg-primary/30 transition-colors" />
-                <Code2 className="h-5 w-5 text-primary-foreground" />
-              <div className="relative p-2 rounded-lg bg-gradient-to-br from-primary to-primary/80">
-              </div>
+              <img
+                src="/logo.png"
+                alt="Pascal Tower"
+                className="relative h-20"
+              />
             </div>
-            <span className="text-xl font-bold text-gradient">PascalTower</span>
+            <span className="text-xl font-bold text-gradient">Pascal Tower</span>
           </Link>
 
           {/* Desktop Navigation */}
