@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { StatsCard } from "@/components/StatsCard";
@@ -107,6 +107,7 @@ export default function Profile() {
   >([]);
   const [isProblemsLoading, setIsProblemsLoading] = useState(false);
   const [problemsError, setProblemsError] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [editData, setEditData] = useState({
     firstName: "",
     lastName: "",
@@ -127,6 +128,20 @@ export default function Profile() {
       location: profile.location ?? "",
     });
   }, [profile]);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "problems" || tab === "overview") {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: "overview" | "problems") => {
+    setActiveTab(tab);
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", tab);
+    setSearchParams(next, { replace: true });
+  };
 
   useEffect(() => {
     const loadProblems = async () => {
@@ -279,7 +294,7 @@ export default function Profile() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={cn(
                 "px-4 py-2 rounded-full text-sm font-medium border transition-colors",
                 activeTab === tab.id
@@ -730,6 +745,15 @@ function ProblemsGrid({
     return haystack.includes(searchTerm.toLowerCase());
   });
 
+  const getTagStyle = (index: number) => {
+    const hue = Math.round((index * 137.5) % 360);
+    return {
+      backgroundColor: `hsl(${hue} 70% 92%)`,
+      borderColor: `hsl(${hue} 70% 80%)`,
+      color: `hsl(${hue} 35% 30%)`,
+    };
+  };
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "Easy":
@@ -795,10 +819,11 @@ function ProblemsGrid({
               </div>
 
               <div className="hidden flex-wrap gap-1.5 lg:flex">
-                {problem.tags.map((tag) => (
+                {problem.tags.map((tag, index) => (
                   <span
                     key={tag}
-                    className="rounded bg-secondary/80 px-2 py-1 text-xs font-medium text-secondary-foreground"
+                    className="rounded border px-2 py-1 text-xs font-medium"
+                    style={getTagStyle(index)}
                   >
                     {tag}
                   </span>
@@ -864,10 +889,11 @@ function ProblemsGrid({
             </Link>
 
             <div className="mb-4 flex flex-wrap gap-1.5">
-              {problem.tags.map((tag) => (
+              {problem.tags.map((tag, index) => (
                 <span
                   key={tag}
-                  className="rounded bg-secondary/80 px-2 py-0.5 text-xs font-medium text-secondary-foreground"
+                  className="rounded border px-2 py-0.5 text-xs font-medium"
+                  style={getTagStyle(index)}
                 >
                   {tag}
                 </span>
