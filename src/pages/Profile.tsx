@@ -4,6 +4,10 @@ import { Header } from "@/components/Header";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { StatsCard } from "@/components/StatsCard";
 import { DifficultyBadge } from "@/components/DifficultyBadge";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabaseClient";
 import { cn } from "@/lib/utils";
@@ -24,6 +28,15 @@ import {
   TrendingUp,
   Award,
   Star,
+  Filter,
+  LayoutGrid,
+  List,
+  Search,
+  ExternalLink,
+  Edit,
+  MoreVertical,
+  Eye,
+  Users,
 } from "lucide-react";
 
 // Generate sample activity data
@@ -86,6 +99,14 @@ const skillTags = [
 export default function Profile() {
   const { user, profile, isProfileLoading, refreshProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "problems">("overview");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [problems, setProblems] = useState<
+    { id: string; title: string; difficulty: "Easy" | "Medium" | "Hard"; created_at: string; tags: string[] }[]
+  >([]);
+  const [isProblemsLoading, setIsProblemsLoading] = useState(false);
+  const [problemsError, setProblemsError] = useState<string | null>(null);
   const [editData, setEditData] = useState({
     firstName: "",
     lastName: "",
@@ -106,6 +127,27 @@ export default function Profile() {
       location: profile.location ?? "",
     });
   }, [profile]);
+
+  useEffect(() => {
+    const loadProblems = async () => {
+      if (!user) return;
+      setIsProblemsLoading(true);
+      setProblemsError(null);
+      const { data, error } = await supabase
+        .from("problems")
+        .select("id, title, difficulty, created_at, tags")
+        .eq("author_id", user.id)
+        .order("created_at", { ascending: false });
+      if (error) {
+        setProblemsError(error.message);
+      } else {
+        setProblems((data ?? []) as typeof problems);
+      }
+      setIsProblemsLoading(false);
+    };
+
+    void loadProblems();
+  }, [user]);
 
   const displayName = useMemo(() => {
     if (!profile) return "Profile";
@@ -230,6 +272,101 @@ export default function Profile() {
       <Header />
 
       <main className="container py-8">
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          {[
+            { id: "overview" as const, label: "Overview" },
+            { id: "problems" as const, label: "My Problems" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-medium border transition-colors",
+                activeTab === tab.id
+                  ? "bg-primary/10 text-primary border-primary/30"
+                  : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "problems" ? (
+          <div className="space-y-4">
+            <div className="border-b border-border pb-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h2 className="text-3xl font-bold tracking-tight">My Problems</h2>
+                  <p className="text-muted-foreground">Problems you have published to PacalTower.</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="gap-2 bg-transparent">
+                    <Filter className="h-4 w-4" />
+                    Filter
+                  </Button>
+                  <div className="flex rounded-md border border-border bg-muted/30 p-0.5">
+                    <Button
+                      variant={viewMode === "grid" ? "secondary" : "ghost"}
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setViewMode("grid")}
+                    >
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant={viewMode === "list" ? "secondary" : "ghost"}
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setViewMode("list")}
+                    >
+                      <List className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search problems by title or tag..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </div>
+            </div>
+
+            {isProblemsLoading && (
+              <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+                Loading problems...
+              </div>
+            )}
+
+            {problemsError && (
+              <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-sm text-destructive">
+                {problemsError}
+              </div>
+            )}
+
+            {!isProblemsLoading && !problemsError && problems.length === 0 && (
+              <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+                You have not published any problems yet.
+              </div>
+            )}
+
+            {!isProblemsLoading && !problemsError && problems.length > 0 && (
+              <ProblemsGrid
+                problems={problems}
+                viewMode={viewMode}
+                searchTerm={searchTerm}
+              />
+            )}
+          </div>
+        ) : (
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - Profile Info */}
           <div className="lg:col-span-1 space-y-6">
@@ -573,7 +710,200 @@ export default function Profile() {
             </div>
           </div>
         </div>
+        )}
       </main>
+    </div>
+  );
+}
+
+function ProblemsGrid({
+  problems,
+  viewMode,
+  searchTerm,
+}: {
+  problems: { id: string; title: string; difficulty: "Easy" | "Medium" | "Hard"; created_at: string; tags: string[] }[];
+  viewMode: "grid" | "list";
+  searchTerm: string;
+}) {
+  const filtered = problems.filter((problem) => {
+    const haystack = `${problem.title} ${problem.tags.join(" ")}`.toLowerCase();
+    return haystack.includes(searchTerm.toLowerCase());
+  });
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case "Easy":
+        return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20";
+      case "Medium":
+        return "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20";
+      case "Hard":
+        return "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
+
+  if (filtered.length === 0) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+        No problems match your search.
+      </div>
+    );
+  }
+
+  if (viewMode === "list") {
+    return (
+      <div className="space-y-2">
+        {filtered.map((problem) => (
+          <Card
+            key={problem.id}
+            className="group overflow-hidden border border-border bg-card transition-all hover:border-primary/40 hover:bg-accent/5"
+          >
+            <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:gap-6">
+              <div className="flex min-w-0 flex-1 items-center gap-4">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    getDifficultyColor(problem.difficulty),
+                    "shrink-0 border px-2.5 py-0.5 text-xs font-semibold"
+                  )}
+                >
+                  {problem.difficulty}
+                </Badge>
+
+                <div className="min-w-0 flex-1">
+                  <h3 className="mb-1.5 text-base font-semibold tracking-tight">{problem.title}</h3>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(problem.created_at).toLocaleDateString("en-US")}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      — solvers
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Eye className="h-3 w-3" />
+                      — views
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3" />
+                      —% success
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="hidden flex-wrap gap-1.5 lg:flex">
+                {problem.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded bg-secondary/80 px-2 py-1 text-xs font-medium text-secondary-foreground"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex shrink-0 items-center gap-1.5">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-xs font-medium" asChild>
+                  <Link to={`/problem/${problem.id}`}>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    View
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="sm" className="gap-1.5 text-xs font-medium" asChild>
+                  <Link to={`/problem/${problem.id}/edit`}>
+                    <Edit className="h-3.5 w-3.5" />
+                    Edit
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" disabled>
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {filtered.map((problem) => (
+        <Card
+          key={problem.id}
+          className="group relative overflow-hidden border border-border bg-card transition-all hover:border-primary/40 hover:shadow-lg"
+        >
+          <div className="p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <Badge
+                variant="outline"
+                className={cn(
+                  getDifficultyColor(problem.difficulty),
+                  "border px-2.5 py-0.5 text-xs font-semibold"
+                )}
+              >
+                {problem.difficulty}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+                disabled
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <Link to={`/problem/${problem.id}`}>
+              <h3 className="mb-3 text-lg font-semibold tracking-tight text-balance transition-colors hover:text-primary">
+                {problem.title}
+              </h3>
+            </Link>
+
+            <div className="mb-4 flex flex-wrap gap-1.5">
+              {problem.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded bg-secondary/80 px-2 py-0.5 text-xs font-medium text-secondary-foreground"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+
+            <div className="mb-4 grid grid-cols-2 gap-2 border-t border-border pt-4 text-xs">
+              <div>
+                <div className="text-muted-foreground">Solvers</div>
+                <div className="font-semibold">—</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">Success</div>
+                <div className="font-semibold">—%</div>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs font-medium bg-transparent" asChild>
+                <Link to={`/problem/${problem.id}`}>
+                  <ExternalLink className="h-3 w-3" />
+                  View Problem
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs font-medium bg-transparent" asChild>
+                <Link to={`/problem/${problem.id}/edit`}>
+                  <Edit className="h-3 w-3" />
+                  Edit
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/3 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+        </Card>
+      ))}
     </div>
   );
 }

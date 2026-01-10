@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { CodeEditor } from "@/components/CodeEditor";
@@ -8,6 +8,7 @@ import { DifficultyBadge, type Difficulty } from "@/components/DifficultyBadge";
 import { SubmissionCard, type Submission } from "@/components/SubmissionCard";
 import { LearnWithAI } from "@/components/LearnWithAI";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabaseClient";
 import { 
   ArrowLeft, 
   Play, 
@@ -32,48 +33,21 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Sample problem data
-const problemData = {
-  id: 1,
-  title: "Two Sum",
-  difficulty: "Easy" as Difficulty,
-  category: "Arrays",
-  description: `Given an array of integers \`nums\` and an integer \`target\`, return indices of the two numbers such that they add up to \`target\`.
+type Problem = {
+  id: string;
+  title: string;
+  difficulty: Difficulty;
+  tags: string[];
+};
 
-You may assume that each input would have **exactly one solution**, and you may not use the same element twice.
-
-You can return the answer in any order.`,
-  examples: [
-    {
-      input: "nums = [2,7,11,15], target = 9",
-      output: "[0,1]",
-      explanation: "Because nums[0] + nums[1] == 9, we return [0, 1]."
-    },
-    {
-      input: "nums = [3,2,4], target = 6",
-      output: "[1,2]",
-      explanation: "Because nums[1] + nums[2] == 6, we return [1, 2]."
-    },
-    {
-      input: "nums = [3,3], target = 6",
-      output: "[0,1]",
-      explanation: null
-    }
-  ],
-  constraints: [
-    "2 <= nums.length <= 10⁴",
-    "-10⁹ <= nums[i] <= 10⁹",
-    "-10⁹ <= target <= 10⁹",
-    "Only one valid answer exists."
-  ],
-  hints: [
-    "A brute force approach would be to check every pair of numbers.",
-    "Can you think of a way to use a hash map to speed this up?",
-    "What if you store each number's index as you iterate?"
-  ],
-  acceptance: 49.2,
-  submissions: "12.4M",
-  likes: 45892,
+type ProblemSection = {
+  id: string;
+  section_type: "statement" | "image" | "video" | "example" | "constraint" | "hint";
+  position: number;
+  content: {
+    html?: string;
+    items?: Array<Record<string, string>>;
+  };
 };
 
 const sampleSubmissions: Submission[] = [
@@ -130,6 +104,10 @@ public:
 export default function ProblemPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [problem, setProblem] = useState<Problem | null>(null);
+  const [sections, setSections] = useState<ProblemSection[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [language, setLanguage] = useState("javascript");
   const [code, setCode] = useState(starterCode.javascript);
   const [activeTab, setActiveTab] = useState<"description" | "submissions" | "ai">("description");
@@ -141,6 +119,52 @@ export default function ProblemPage() {
     { id: 3, input: "[3,3], 6", expected: "[0,1]", status: "pending" },
   ]);
   const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadProblem = async () => {
+      if (!id) return;
+      setIsLoading(true);
+      setLoadError(null);
+      const { data: problemData, error: problemError } = await supabase
+        .from("problems")
+        .select("id, title, difficulty, tags")
+        .eq("id", id)
+        .single();
+      if (problemError) {
+        setIsLoading(false);
+        setLoadError(problemError.message);
+        return;
+      }
+
+      const { data: sectionData, error: sectionError } = await supabase
+        .from("problem_sections")
+        .select("id, section_type, position, content")
+        .eq("problem_id", id)
+        .order("position", { ascending: true });
+      if (sectionError) {
+        setIsLoading(false);
+        setLoadError(sectionError.message);
+        return;
+      }
+      setProblem(problemData as Problem);
+      setSections((sectionData ?? []) as ProblemSection[]);
+      setIsLoading(false);
+    };
+
+    void loadProblem();
+  }, [id]);
+
+  const problemCategory = useMemo(() => problem?.tags?.[0] ?? "General", [problem?.tags]);
+  const prepareStatementHtml = (html: string) => {
+    if (typeof window === "undefined") return html;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    doc.querySelectorAll("a").forEach((anchor) => {
+      anchor.setAttribute("target", "_blank");
+      anchor.setAttribute("rel", "noreferrer");
+    });
+    return doc.body.innerHTML;
+  };
 
   const handleLanguageChange = (newLanguage: string) => {
     setLanguage(newLanguage);
@@ -202,16 +226,16 @@ export default function ProblemPage() {
             </Link>
             <div>
               <div className="flex items-center gap-3">
-                <span className="text-muted-foreground font-mono">#{problemData.id}</span>
-                <h1 className="text-lg font-semibold">{problemData.title}</h1>
-                <DifficultyBadge difficulty={problemData.difficulty} />
+                <span className="text-muted-foreground font-mono">#{problem?.id ?? "—"}</span>
+                <h1 className="text-lg font-semibold">{problem?.title ?? "Loading problem"}</h1>
+                {problem?.difficulty && <DifficultyBadge difficulty={problem.difficulty} />}
               </div>
               <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
-                <span>{problemData.category}</span>
+                <span>{problemCategory}</span>
                 <span>•</span>
-                <span>{problemData.acceptance}% acceptance</span>
+                <span>—% acceptance</span>
                 <span>•</span>
-                <span>{problemData.submissions} submissions</span>
+                <span>— submissions</span>
               </div>
             </div>
           </div>
@@ -298,76 +322,173 @@ export default function ProblemPage() {
           <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
             {activeTab === "description" && (
               <div className="p-6 space-y-6">
-                {/* Problem Statement */}
-                <div className="prose prose-invert max-w-none">
-                  <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                    {problemData.description}
-                  </p>
-                </div>
+                {isLoading && <p className="text-sm text-muted-foreground">Loading problem...</p>}
+                {loadError && <p className="text-sm text-destructive">{loadError}</p>}
+                {!isLoading &&
+                  !loadError &&
+                  sections.map((section) => {
+                    if (section.section_type === "statement") {
+                      return (
+                        <div
+                          key={section.id}
+                          className={cn(
+                            "prose prose-sm max-w-none text-foreground",
+                            "[&_a]:text-sky-600 [&_a]:underline dark:[&_a]:text-sky-400",
+                            "[&_.inline-variable]:rounded [&_.inline-variable]:bg-muted [&_.inline-variable]:px-1.5 [&_.inline-variable]:py-0.5",
+                            "[&_.inline-variable]:font-mono [&_.inline-variable]:text-xs [&_.inline-variable]:text-primary",
+                          )}
+                          dangerouslySetInnerHTML={{
+                            __html: prepareStatementHtml(section.content.html ?? ""),
+                          }}
+                        />
+                      );
+                    }
 
-                {/* Examples */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                    Examples
-                  </h3>
-                  {problemData.examples.map((example, index) => (
-                    <div key={index} className="p-4 rounded-lg bg-muted/50 border border-border space-y-2">
-                      <div className="font-mono text-sm">
-                        <span className="text-muted-foreground">Input: </span>
-                        <span className="text-foreground">{example.input}</span>
-                      </div>
-                      <div className="font-mono text-sm">
-                        <span className="text-muted-foreground">Output: </span>
-                        <span className="text-primary">{example.output}</span>
-                      </div>
-                      {example.explanation && (
-                        <div className="text-sm text-muted-foreground">
-                          <span className="font-medium">Explanation: </span>
-                          {example.explanation}
+                    if (section.section_type === "image") {
+                      const items = section.content.items ?? [];
+                      return (
+                        <div key={section.id} className="space-y-3">
+                          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                            Images
+                          </h3>
+                          <div className="grid grid-cols-2 gap-3">
+                            {items.map((item, index) => (
+                              <div
+                                key={`${section.id}-image-${index}`}
+                                className="rounded-lg border border-border bg-muted/50 overflow-hidden"
+                              >
+                                {item.url && (
+                                  <img
+                                    src={item.url}
+                                    alt={item.caption || `Image ${index + 1}`}
+                                    className="h-40 w-full object-cover"
+                                  />
+                                )}
+                                {item.caption && (
+                                  <p className="px-3 py-2 text-xs text-muted-foreground">{item.caption}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                      );
+                    }
 
-                {/* Constraints */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                    Constraints
-                  </h3>
-                  <ul className="space-y-1.5">
-                    {problemData.constraints.map((constraint, index) => (
-                      <li key={index} className="flex items-start gap-2 text-sm">
-                        <span className="text-primary mt-1">•</span>
-                        <code className="text-foreground bg-muted px-1.5 py-0.5 rounded">
-                          {constraint}
-                        </code>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Hints */}
-                <div className="space-y-3">
-                  <button
-                    onClick={() => setShowHints(!showHints)}
-                    className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Lightbulb className="h-4 w-4" />
-                    Hints ({problemData.hints.length})
-                    <ChevronDown className={cn("h-4 w-4 transition-transform", showHints && "rotate-180")} />
-                  </button>
-                  {showHints && (
-                    <div className="space-y-2 animate-fade-in">
-                      {problemData.hints.map((hint, index) => (
-                        <div key={index} className="p-3 rounded-lg bg-medium/10 border border-medium/20 text-sm">
-                          <span className="font-medium text-medium">Hint {index + 1}: </span>
-                          {hint}
+                    if (section.section_type === "video") {
+                      const items = section.content.items ?? [];
+                      return (
+                        <div key={section.id} className="space-y-3">
+                          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                            Videos
+                          </h3>
+                          <div className="space-y-2">
+                            {items.map((item, index) => (
+                              <div
+                                key={`${section.id}-video-${index}`}
+                                className="p-3 rounded-lg bg-muted/50 border border-border text-sm"
+                              >
+                                <a
+                                  href={item.url ?? "#"}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-sky-600 underline dark:text-sky-400"
+                                >
+                                  {item.caption || `Video link ${index + 1}`}
+                                </a>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      );
+                    }
+
+                    if (section.section_type === "example") {
+                      const items = section.content.items ?? [];
+                      return (
+                        <div key={section.id} className="space-y-4">
+                          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                            Examples
+                          </h3>
+                          {items.map((example, index) => (
+                            <div
+                              key={`${section.id}-example-${index}`}
+                              className="p-4 rounded-lg bg-muted/50 border border-border space-y-2"
+                            >
+                              <div className="font-mono text-sm">
+                                <span className="text-muted-foreground">Input: </span>
+                                <span className="text-foreground">{example.input ?? "—"}</span>
+                              </div>
+                              <div className="font-mono text-sm">
+                                <span className="text-muted-foreground">Output: </span>
+                                <span className="text-primary">{example.output ?? "—"}</span>
+                              </div>
+                              {example.explanation && (
+                                <div className="text-sm text-muted-foreground">
+                                  <span className="font-medium">Explanation: </span>
+                                  {example.explanation}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    if (section.section_type === "constraint") {
+                      const items = section.content.items ?? [];
+                      return (
+                        <div key={section.id} className="space-y-3">
+                          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                            Constraints
+                          </h3>
+                          <ul className="space-y-1.5">
+                            {items.map((item, index) => (
+                              <li key={`${section.id}-constraint-${index}`} className="flex items-start gap-2 text-sm">
+                                <span className="text-primary mt-1">•</span>
+                                <code className="text-foreground bg-muted px-1.5 py-0.5 rounded">
+                                  {typeof item === "string" ? item : item.text ?? "—"}
+                                </code>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    }
+
+                    if (section.section_type === "hint") {
+                      const items = section.content.items ?? [];
+                      return (
+                        <div key={section.id} className="space-y-3">
+                          <button
+                            onClick={() => setShowHints(!showHints)}
+                            className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <Lightbulb className="h-4 w-4" />
+                            Hints ({items.length})
+                            <ChevronDown className={cn("h-4 w-4 transition-transform", showHints && "rotate-180")} />
+                          </button>
+                          {showHints && (
+                            <div className="space-y-2 animate-fade-in">
+                              {items.map((item, index) => (
+                                <div
+                                  key={`${section.id}-hint-${index}`}
+                                  className="p-3 rounded-lg bg-medium/10 border border-medium/20 text-sm"
+                                >
+                                  <span className="font-medium text-medium">Hint {index + 1}: </span>
+                                  {typeof item === "string" ? item : item.text ?? "—"}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    return null;
+                  })}
+                {!isLoading && !loadError && sections.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No sections available.</p>
+                )}
               </div>
             )}
 
@@ -388,7 +509,7 @@ export default function ProblemPage() {
             )}
 
             {activeTab === "ai" && (
-              <LearnWithAI problemTitle={problemData.title} />
+              <LearnWithAI problemTitle={problem?.title ?? "Problem"} />
             )}
           </div>
         </div>

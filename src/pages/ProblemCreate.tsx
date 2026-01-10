@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowDown,
   ArrowUp,
@@ -17,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/contexts/AuthContext";
 
 type ExampleBlock = {
   input: string;
@@ -63,6 +66,10 @@ const createSection = (type: SectionType): Section => {
 };
 
 export default function ProblemCreate() {
+  const navigate = useNavigate();
+  const { id: problemId } = useParams();
+  const isEditMode = Boolean(problemId);
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [difficulty, setDifficulty] = useState("Medium");
   const [tags, setTags] = useState<string[]>([]);
@@ -70,6 +77,11 @@ export default function ProblemCreate() {
   const [sections, setSections] = useState<Section[]>([createSection("statement")]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [previewMode, setPreviewMode] = useState<"summary" | "preview">("summary");
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isHydrating, setIsHydrating] = useState(isEditMode);
+  const [isLoadingProblem, setIsLoadingProblem] = useState(isEditMode);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const normalizeSections = (items: Section[]) => {
     const hintIndex = items.findIndex((section) => section.type === "hints");
@@ -173,6 +185,244 @@ export default function ProblemCreate() {
     setTagsInput("");
   };
 
+  useEffect(() => {
+    if (!isEditMode) {
+      setIsHydrating(false);
+    }
+  }, [isEditMode]);
+
+  useEffect(() => {
+    const loadProblem = async () => {
+      if (!problemId) return;
+      setIsLoadingProblem(true);
+      setLoadError(null);
+      const { data: problem, error: problemError } = await supabase
+        .from("problems")
+        .select("title, difficulty, tags")
+        .eq("id", problemId)
+        .single();
+      if (problemError || !problem) {
+        setIsLoadingProblem(false);
+        setLoadError(problemError?.message ?? "Problem not found.");
+        return;
+      }
+
+      const { data: sectionData, error: sectionError } = await supabase
+        .from("problem_sections")
+        .select("id, section_type, position, content")
+        .eq("problem_id", problemId)
+        .order("position", { ascending: true });
+      if (sectionError) {
+        setIsLoadingProblem(false);
+        setLoadError(sectionError.message);
+        return;
+      }
+
+      const mappedSections = (sectionData ?? [])
+        .map((section) => {
+          switch (section.section_type) {
+            case "statement":
+              return {
+                id: section.id,
+                type: "statement",
+                data: { mode: "rich", html: section.content?.html ?? "" },
+              } as Section;
+            case "image":
+              return {
+                id: section.id,
+                type: "images",
+                data: (section.content?.items ?? []).map((item: MediaBlock) => ({
+                  url: item.url ?? "",
+                  caption: item.caption ?? "",
+                })),
+              } as Section;
+            case "video":
+              return {
+                id: section.id,
+                type: "videos",
+                data: (section.content?.items ?? []).map((item: MediaBlock) => ({
+                  url: item.url ?? "",
+                  caption: item.caption ?? "",
+                })),
+              } as Section;
+            case "example":
+              return {
+                id: section.id,
+                type: "examples",
+                data: (section.content?.items ?? []).map((item: ExampleBlock) => ({
+                  input: item.input ?? "",
+                  output: item.output ?? "",
+                  explanation: item.explanation ?? "",
+                })),
+              } as Section;
+            case "constraint":
+              return {
+                id: section.id,
+                type: "constraints",
+                data: (section.content?.items ?? []).map((item: { text?: string } | string) =>
+                  typeof item === "string" ? item : item.text ?? "",
+                ),
+              } as Section;
+            case "hint":
+              return {
+                id: section.id,
+                type: "hints",
+                data: (section.content?.items ?? []).map((item: { text?: string } | string) =>
+                  typeof item === "string" ? item : item.text ?? "",
+                ),
+              } as Section;
+            default:
+              return null;
+          }
+        })
+        .filter(Boolean) as Section[];
+
+      const hintSections = mappedSections.filter((section) => section.type === "hints");
+      const hintItems = hintSections.flatMap((section) => section.data as string[]);
+      const withoutHints = mappedSections.filter((section) => section.type !== "hints");
+      const normalized = hintItems.length
+        ? normalizeSections([
+            ...withoutHints,
+            { id: hintSections[0]?.id ?? `hint-${problemId}`, type: "hints", data: hintItems },
+          ])
+        : withoutHints;
+
+      if (!normalized.some((section) => section.type === "statement")) {
+        normalized.unshift(createSection("statement"));
+      }
+
+      setTitle(problem.title);
+      setDifficulty(problem.difficulty);
+      setTags(problem.tags ?? []);
+      setSections(normalized);
+      setHasUnsavedChanges(false);
+      setIsHydrating(false);
+      setIsLoadingProblem(false);
+    };
+
+    void loadProblem();
+  }, [problemId]);
+
+  const buildSectionContent = (section: Section) => {
+    if (section.type === "statement") {
+      return { html: section.data.html };
+    }
+    if (section.type === "images" || section.type === "videos") {
+      const items = (section.data as MediaBlock[]).filter((item) => item.url.trim() || item.caption.trim());
+      return { items };
+    }
+    if (section.type === "examples") {
+      const items = (section.data as ExampleBlock[]).filter((item) =>
+        [item.input, item.output, item.explanation].some((value) => value.trim()),
+      );
+      return { items };
+    }
+    const items = (section.data as string[]).filter((item) => item.trim());
+    return { items };
+  };
+
+  const getDbSectionType = (section: Section) => {
+    switch (section.type) {
+      case "images":
+        return "image";
+      case "videos":
+        return "video";
+      case "examples":
+        return "example";
+      case "constraints":
+        return "constraint";
+      case "hints":
+        return "hint";
+      default:
+        return section.type;
+    }
+  };
+
+  const handlePublish = async () => {
+    setSaveError(null);
+    if (!user) {
+      setSaveError("You must be signed in to publish a problem.");
+      return;
+    }
+    if (!title.trim()) {
+      setSaveError("Please add a problem title.");
+      return;
+    }
+
+    setIsSaving(true);
+    let problemIdToUse = problemId;
+    if (isEditMode && problemIdToUse) {
+      const { error: updateError } = await supabase
+        .from("problems")
+        .update({
+          title: title.trim(),
+          difficulty,
+          tags,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", problemIdToUse);
+      if (updateError) {
+        setIsSaving(false);
+        setSaveError(updateError.message);
+        return;
+      }
+      const { error: deleteError } = await supabase
+        .from("problem_sections")
+        .delete()
+        .eq("problem_id", problemIdToUse);
+      if (deleteError) {
+        setIsSaving(false);
+        setSaveError(deleteError.message);
+        return;
+      }
+    } else {
+      const { data: problem, error: problemError } = await supabase
+        .from("problems")
+        .insert({
+          author_id: user.id,
+          title: title.trim(),
+          difficulty,
+          tags,
+        })
+        .select("id")
+        .single();
+
+      if (problemError || !problem) {
+        setIsSaving(false);
+        setSaveError(problemError?.message ?? "Failed to save problem.");
+        return;
+      }
+      problemIdToUse = problem.id;
+    }
+
+    const sectionRows = sections
+      .map((section, index) => {
+        const content = buildSectionContent(section);
+        if (section.type !== "statement") {
+          const items = (content as { items?: unknown[] }).items;
+          if (!items || items.length === 0) return null;
+        }
+        return {
+          problem_id: problemIdToUse,
+          section_type: getDbSectionType(section),
+          position: index,
+          content,
+        };
+      })
+      .filter(Boolean);
+
+    const { error: sectionError } = await supabase.from("problem_sections").insert(sectionRows);
+    if (sectionError) {
+      setIsSaving(false);
+      setSaveError(sectionError.message);
+      return;
+    }
+
+    setIsSaving(false);
+    setHasUnsavedChanges(false);
+    navigate(`/problem/${problemIdToUse}`);
+  };
+
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -187,8 +437,9 @@ export default function ProblemCreate() {
   }, [hasUnsavedChanges]);
 
   useEffect(() => {
+    if (isHydrating) return;
     if (title !== "" || tags.length > 0) setHasUnsavedChanges(true);
-  }, [title, tags.length]);
+  }, [title, tags.length, isHydrating]);
 
   const prepareStatementHtml = (html: string) => {
     if (typeof window === "undefined") return html;
@@ -258,6 +509,32 @@ export default function ProblemCreate() {
     [sections],
   );
 
+  if (isLoadingProblem) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-10">
+          <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
+            Loading problem...
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-10">
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-6 text-sm text-destructive">
+            {loadError}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -268,14 +545,14 @@ export default function ProblemCreate() {
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h1 className="text-3xl font-bold">Create a problem</h1>
+                  <h1 className="text-3xl font-bold">{isEditMode ? "Edit problem" : "Create a problem"}</h1>
                   <p className="text-sm text-muted-foreground">
                     Build a precise, high-signal prompt with rich sections and focused constraints.
                   </p>
                 </div>
                 <span className="hidden md:flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-xs text-muted-foreground">
                   <Wand2 className="h-4 w-4 text-primary" />
-                  Draft v0.1
+                  {isEditMode ? "Editing" : "Draft v0.1"}
                 </span>
               </div>
 
@@ -1041,11 +1318,14 @@ export default function ProblemCreate() {
             </div>
 
             <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-background to-sky-500/10 p-6 shadow-sm">
-              <h3 className="text-lg font-semibold">Ready to publish?</h3>
+              <h3 className="text-lg font-semibold">{isEditMode ? "Ready to update?" : "Ready to publish?"}</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Preview, validate constraints, then move to test cases and evaluation logic.
+                Preview, validate constraints, then {isEditMode ? "save your revisions." : "publish when ready."}
               </p>
-              <Button className="mt-4 w-full">Continue to test cases</Button>
+              {saveError && <p className="mt-4 text-sm text-destructive">{saveError}</p>}
+              <Button className="mt-4 w-full" type="button" onClick={handlePublish} disabled={isSaving}>
+                {isSaving ? (isEditMode ? "Updating..." : "Publishing...") : isEditMode ? "Update problem" : "Publish problem"}
+              </Button>
             </div>
           </aside>
         </div>

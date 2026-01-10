@@ -16,6 +16,7 @@ import ProblemLeaderboard from "./pages/ProblemLeaderboard";
 import SubmissionDetail from "./pages/SubmissionDetail";
 import Profile from "./pages/Profile";
 import ProfileCreate from "./pages/ProfileCreate";
+import Changelog from "./pages/Changelog";
 import Privacy from "./pages/Privacy";
 import Tutorials from "./pages/Tutorials";
 import TutorialDetail from "./pages/TutorialDetail";
@@ -121,6 +122,7 @@ function AppRoutes() {
       />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/changelog" element={<Changelog />} />
       
       {/* Protected routes */}
       <Route 
@@ -141,6 +143,14 @@ function AppRoutes() {
       />
       <Route 
         path="/problem/create" 
+        element={
+          <ProfileRequiredRoute>
+            <ProblemCreate />
+          </ProfileRequiredRoute>
+        } 
+      />
+      <Route 
+        path="/problem/:id/edit" 
         element={
           <ProfileRequiredRoute>
             <ProblemCreate />

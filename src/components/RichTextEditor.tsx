@@ -26,17 +26,82 @@ export function RichTextEditor({ value, mode, onChange, onModeChange }: RichText
 
   useEffect(() => {
     if (!editorRef.current) return;
+    if (mode !== "rich") return;
     if (editorRef.current === document.activeElement) return;
     if (editorRef.current.innerHTML !== value) {
       editorRef.current.innerHTML = value;
     }
-  }, [value]);
+  }, [value, mode]);
 
-  const applyCommand = (command: string, commandValue?: string) => {
-    document.execCommand(command, false, commandValue);
+  const collapseSelectionToEnd = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
+
+  const syncContent = () => {
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML);
     }
+  };
+
+  const applyInlineFormat = (command: string) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand(command, false);
+    collapseSelectionToEnd();
+    if (document.queryCommandState(command)) {
+      document.execCommand(command, false);
+    }
+    syncContent();
+  };
+
+  const applyBlockFormat = (value: string) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand("formatBlock", false, value);
+    collapseSelectionToEnd();
+    document.execCommand("formatBlock", false, "p");
+    syncContent();
+  };
+
+  const applyListFormat = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand("insertUnorderedList", false);
+    collapseSelectionToEnd();
+    if (document.queryCommandState("insertUnorderedList")) {
+      document.execCommand("insertUnorderedList", false);
+    }
+    syncContent();
+  };
+
+  const applyVariable = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim() || "var";
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      const codeEl = document.createElement("code");
+      codeEl.className = "inline-variable";
+      codeEl.textContent = selectedText;
+      range.insertNode(codeEl);
+      range.setStartAfter(codeEl);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    } else {
+      const codeEl = document.createElement("code");
+      codeEl.className = "inline-variable";
+      codeEl.textContent = selectedText;
+      editorRef.current.appendChild(codeEl);
+    }
+    onChange(editorRef.current.innerHTML);
   };
 
   const getAnchorFromSelection = () => {
@@ -135,29 +200,34 @@ export function RichTextEditor({ value, mode, onChange, onModeChange }: RichText
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {[
-          { label: "H1", command: "formatBlock", value: "h1" },
-          { label: "Bold", command: "bold" },
-          { label: "Italic", command: "italic" },
-          { label: "Underline", command: "underline" },
-          { label: "List", command: "insertUnorderedList" },
-          { label: "Code", command: "formatBlock", value: "pre" },
-        ].map((button) => (
-          <Button
-            key={button.label}
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => applyCommand(button.command, button.value)}
-          >
-            {button.label}
-          </Button>
-        ))}
-        <Button type="button" variant="secondary" size="sm" onClick={openLinkDialog}>
-          Link
+      {mode === "rich" && (
+        <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" variant="secondary" size="sm" onClick={() => applyBlockFormat("h1")}>
+          H1
         </Button>
-      </div>
+        <Button type="button" variant="secondary" size="sm" onClick={() => applyInlineFormat("bold")}>
+          Bold
+        </Button>
+        <Button type="button" variant="secondary" size="sm" onClick={() => applyInlineFormat("italic")}>
+          Italic
+        </Button>
+        <Button type="button" variant="secondary" size="sm" onClick={() => applyInlineFormat("underline")}>
+          Underline
+        </Button>
+        <Button type="button" variant="secondary" size="sm" onClick={applyListFormat}>
+          List
+        </Button>
+        <Button type="button" variant="secondary" size="sm" onClick={() => applyBlockFormat("pre")}>
+          Code
+        </Button>
+          <Button type="button" variant="secondary" size="sm" onClick={applyVariable}>
+            Variable
+          </Button>
+          <Button type="button" variant="secondary" size="sm" onClick={openLinkDialog}>
+            Link
+          </Button>
+        </div>
+      )}
 
       <div className="rounded-xl border border-border bg-background/70 p-4">
         {mode === "rich" ? (
@@ -176,6 +246,8 @@ export function RichTextEditor({ value, mode, onChange, onModeChange }: RichText
               "[&_p]:text-sm [&_p]:leading-relaxed",
               "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:text-sm [&_ul]:my-3",
               "[&_li]:mb-1",
+              "[&_.inline-variable]:rounded [&_.inline-variable]:bg-muted [&_.inline-variable]:px-1.5 [&_.inline-variable]:py-0.5 [&_.inline-variable]:font-mono [&_.inline-variable]:text-xs [&_.inline-variable]:text-primary",
+              "[&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs",
             )}
           />
         ) : (
