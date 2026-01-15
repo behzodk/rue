@@ -11,6 +11,7 @@ import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import ProblemPage from "./pages/ProblemPage";
 import ProblemCreate from "./pages/ProblemCreate";
+import ProblemAdditionals from "./pages/ProblemAdditionals";
 import Leaderboard from "./pages/Leaderboard";
 import ProblemLeaderboard from "./pages/ProblemLeaderboard";
 import SubmissionDetail from "./pages/SubmissionDetail";
@@ -156,6 +157,14 @@ function AppRoutes() {
             <ProblemCreate />
           </ProfileRequiredRoute>
         } 
+      />
+      <Route
+        path="/problem/:id/additionals"
+        element={
+          <ProfileRequiredRoute>
+            <ProblemAdditionals />
+          </ProfileRequiredRoute>
+        }
       />
       <Route 
         path="/problem/:id/leaderboard" 

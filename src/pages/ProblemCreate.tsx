@@ -338,10 +338,10 @@ export default function ProblemCreate() {
     }
   };
 
-  const handlePublish = async () => {
+  const handleContinue = async () => {
     setSaveError(null);
     if (!user) {
-      setSaveError("You must be signed in to publish a problem.");
+      setSaveError("You must be signed in to save a problem.");
       return;
     }
     if (!title.trim()) {
@@ -420,7 +420,11 @@ export default function ProblemCreate() {
 
     setIsSaving(false);
     setHasUnsavedChanges(false);
-    navigate(`/problem/${problemIdToUse}`);
+    if (isEditMode) {
+      navigate(`/problem/${problemIdToUse}`);
+      return;
+    }
+    navigate(`/problem/${problemIdToUse}/additionals`);
   };
 
 
@@ -1318,13 +1322,14 @@ export default function ProblemCreate() {
             </div>
 
             <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-background to-sky-500/10 p-6 shadow-sm">
-              <h3 className="text-lg font-semibold">{isEditMode ? "Ready to update?" : "Ready to publish?"}</h3>
+              <h3 className="text-lg font-semibold">{isEditMode ? "Ready to update?" : "Ready for additionals?"}</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Preview, validate constraints, then {isEditMode ? "save your revisions." : "publish when ready."}
+                Preview, validate constraints, then{" "}
+                {isEditMode ? "save your revisions." : "continue to visibility, slug, and test cases."}
               </p>
               {saveError && <p className="mt-4 text-sm text-destructive">{saveError}</p>}
-              <Button className="mt-4 w-full" type="button" onClick={handlePublish} disabled={isSaving}>
-                {isSaving ? (isEditMode ? "Updating..." : "Publishing...") : isEditMode ? "Update problem" : "Publish problem"}
+              <Button className="mt-4 w-full" type="button" onClick={handleContinue} disabled={isSaving}>
+                {isSaving ? "Saving..." : isEditMode ? "Update problem" : "Continue with additionals"}
               </Button>
             </div>
           </aside>
